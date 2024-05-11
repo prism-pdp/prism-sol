@@ -6,11 +6,14 @@ import {Counter} from "../src/Counter.sol";
 
 contract CounterTest is Test {
     Counter public counter;
+    Counter public counterMin;
+    Counter public counterMax;
+
+    uint256 num = 100;
+    uint256 numMin = 0;
+    uint256 numMax = 2**256 - 1;
 
     function setUp() public {
-        uint256 num = 100;
-        uint256 numMin = 0;
-        uint256 numMax = 2**256 - 1;
         counter = new Counter(num);
         counterMin = new Counter(numMin);
         counterMax = new Counter(numMax);
