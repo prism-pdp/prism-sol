@@ -8,6 +8,10 @@ contract BaseCounter {
         count = _initVal;
     }
 
+    function setCount(uint256 _newVal) public {
+        count = _newVal;
+    }
+
     function increment() public {
         if (count < (2**256 - 1)) {
             count++;

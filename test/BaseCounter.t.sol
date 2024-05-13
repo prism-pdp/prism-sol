@@ -15,8 +15,12 @@ contract BaseCounterTest is Test {
 
     function setUp() public {
         counter = new BaseCounter(num);
-        counterMin = new BaseCounter(numMin);
-        counterMax = new BaseCounter(numMax);
+
+        counterMin = new BaseCounter(0);
+        counterMin.setCount(numMin);
+
+        counterMax = new BaseCounter(0);
+        counterMax.setCount(numMax);
     }
 
     function testIncrement() public {
