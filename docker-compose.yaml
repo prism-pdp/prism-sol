@@ -1,0 +1,11 @@
+services:
+  sol-compiler:
+    image: dpduado/sol-compiler
+    build: .
+    volumes:
+      - .:/app
+
+networks:
+  default:
+    name: dpduado
+    external: true

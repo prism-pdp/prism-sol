@@ -1,14 +1,16 @@
 .PHONY: test
 
+docker-build:
+	docker compose build sol-compiler
+
 docker-run:
-	docker run -it --rm \
-		--workdir /home/foundry \
-		-v $(PWD):/home/foundry \
-		ghcr.io/foundry-rs/foundry:latest@sha256:3bcbeab19b88d8a4245d811cf0d2cd35dbaa2042fd3f61516bae28156eedcd2a \
-		'$(CMD)'
+	docker compose run -it --rm sol-compiler $(CMD)
 
 test:
 	make docker-run CMD='forge test'
+
+build:
+	$(MAKE) docker-run CMD="build"
 
 shell:
 	make docker-run CMD='/bin/sh'
