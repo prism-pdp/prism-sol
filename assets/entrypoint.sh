@@ -7,7 +7,8 @@ elif [ "$1" = "build" ]; then
     for f in $(ls src/*.sol); do
         name=$(basename $f .sol)
         jq -c '.abi' ./out/${name}.sol/${name}.json > ./cache/${name}.abi
-        abigen --abi ./cache/${name}.abi --pkg main --type ${name} --out ./go-bindings/${name}.go
+        jq -c -r '.bytecode.object' ./out/${name}.sol/${name}.json > ./cache/${name}.bin
+        abigen --abi ./cache/${name}.abi --bin ./cache/${name}.bin --pkg lib --type ${name} --out ./go-bindings/${name}.go
     done
 
 else
