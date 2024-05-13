@@ -5,7 +5,3 @@ services:
     volumes:
       - .:/app
 
-networks:
-  default:
-    name: dpduado
-    external: true
