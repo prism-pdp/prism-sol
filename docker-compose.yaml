@@ -1,7 +1,0 @@
-services:
-  sol-compiler:
-    image: dpduado/sol-compiler
-    build: ./build
-    volumes:
-      - .:/app
-
