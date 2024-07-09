@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-contract Registry {
+contract XZ21 {
     address public sp;
     address public tpa;
     Para public para;

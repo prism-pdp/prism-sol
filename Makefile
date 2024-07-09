@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test build
 
 docker-build:
 	docker compose build sol-compiler

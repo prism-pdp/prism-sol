@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Registry} from "../src/XZ21.sol";
+import {XZ21} from "../src/XZ21.sol";
 
 contract XZ21Test is Test {
-    Registry public regContract;
+    XZ21 public regContract;
 
     string constant PAIRING = "test-value(pairing)";
     bytes constant G = "0xAA";
@@ -16,11 +16,11 @@ contract XZ21Test is Test {
     address constant SP_ADDR = 0x9999999999999999999999999999999999999999;
 
     function setUp() public {
-        regContract = new Registry(PAIRING, G, U, SP_ADDR, TPA_ADDR);
+        regContract = new XZ21(PAIRING, G, U, SP_ADDR, TPA_ADDR);
     }
 
     function testRead() public view {
-        Registry.Para memory para = regContract.getPara();
+        XZ21.Para memory para = regContract.getPara();
         assertEq(para.pairing, PAIRING);
         assertEq(para.g, G);
         assertEq(para.u, U);
@@ -33,7 +33,7 @@ contract XZ21Test is Test {
         regContract.updateFileIndex("1", USER1_ADDR);
         regContract.updateFileIndex("1", USER2_ADDR);
 
-        Registry.FileIndex memory fileIndex = regContract.readFileIndex("1");
+        XZ21.FileIndex memory fileIndex = regContract.readFileIndex("1");
         assertEq(fileIndex.owners[0], USER1_ADDR);
         assertEq(fileIndex.owners[1], USER2_ADDR);
     }
