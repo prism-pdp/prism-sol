@@ -14,12 +14,13 @@ contract BaseCounterTest is Test {
     uint256 numMax = 2**256 - 1;
 
     function setUp() public {
-        counter = new BaseCounter(num);
+        counter = new BaseCounter();
+        counter.setCount(num);
 
-        counterMin = new BaseCounter(0);
+        counterMin = new BaseCounter();
         counterMin.setCount(numMin);
 
-        counterMax = new BaseCounter(0);
+        counterMax = new BaseCounter();
         counterMax.setCount(numMax);
     }
 

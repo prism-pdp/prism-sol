@@ -4,8 +4,8 @@ pragma solidity ^0.8.13;
 contract BaseCounter {
     uint256 public count;
 
-    constructor(uint256 _initVal) {
-        count = _initVal;
+    constructor() {
+        count = 0;
     }
 
     function setCount(uint256 _newVal) public {
