@@ -27,6 +27,6 @@ RUN apk update \
 
 WORKDIR /app
 
-COPY --chmod=755 ./assets/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 ./entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]
