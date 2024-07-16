@@ -2,15 +2,23 @@
 pragma solidity ^0.8.13;
 
 contract XZ21 {
-    address public sp;
-    address public tpa;
-    Para public para;
+    Para para;
+
+    address public addrSM;
+    address public addrSP;
+    address public addrTPA;
+
+    mapping(address => Account) AccountIndexTable;
     mapping(string => FileIndex) private fileIndexTable;
 
     struct Para {
-        string pairing;
-        bytes u;
-        bytes g;
+        string Pairing;
+        bytes U;
+        bytes G;
+    }
+
+    struct Account {
+        string role;
     }
 
     struct FileIndex {
@@ -18,21 +26,27 @@ contract XZ21 {
     }
 
     constructor(
-        string memory _pairing,
-        bytes memory _g,
-        bytes memory _u,
-        address _sp,
-        address _tpa
+        address _addrTPA,
+        address _addrSP
     )
     {
-        para.pairing = _pairing;
-        para.u = _u;
-        para.g = _g;
-        sp = _sp;
-        tpa = _tpa;
+        addrSM = msg.sender;
+        addrSP = _addrSP;
+        addrTPA = _addrTPA;
     }
 
-    function getPara() public view returns(Para memory) {
+    function RegisterPara(
+        string memory _pairing,
+        bytes memory _g,
+        bytes memory _u
+    ) public
+    {
+        para.Pairing = _pairing;
+        para.U = _u;
+        para.G = _g;
+    }
+
+    function GetPara() public view returns(Para memory) {
         return para;
     }
 
@@ -46,5 +60,20 @@ contract XZ21 {
 
     function updateFileIndex(string memory _id, address _owner) public {
         fileIndexTable[_id].owners.push(_owner);
+    }
+
+    function GetAddrSM() public view returns(address)
+    {
+        return addrSM;
+    }
+
+    function GetAddrSP() public view returns(address)
+    {
+        return addrSP;
+    }
+
+    function GetAddrTPA() public view returns(address)
+    {
+        return addrTPA;
     }
 }
