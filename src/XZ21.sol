@@ -8,7 +8,7 @@ contract XZ21 {
     address public addrSP;
     address public addrTPA;
 
-    mapping(address => Account) AccountIndexTable;
+    mapping(bytes32 => Account) accountIndexTable;
     mapping(string => FileIndex) private fileIndexTable;
 
     struct Para {
@@ -18,7 +18,7 @@ contract XZ21 {
     }
 
     struct Account {
-        string role;
+        string pubKey;
     }
 
     struct FileIndex {
@@ -44,6 +44,15 @@ contract XZ21 {
         para.Pairing = _pairing;
         para.U = _u;
         para.G = _g;
+    }
+
+    function EnrollAccount(
+        string memory _pubKey
+    ) public
+    {
+        Account memory a = Account(_pubKey);
+        bytes32 id = keccak256(bytes(_pubKey));
+        accountIndexTable[id] = a;
     }
 
     function GetPara() public view returns(Para memory) {
@@ -75,5 +84,16 @@ contract XZ21 {
     function GetAddrTPA() public view returns(address)
     {
         return addrTPA;
+    }
+
+    function LookUpAccount(string memory _pubKey) public view returns(bool)
+    {
+        bytes32 id = keccak256(bytes(_pubKey));
+        Account memory a = accountIndexTable[id];
+        if (bytes(a.pubKey).length == 0)
+        {
+            return false;
+        }
+        return true;
     }
 }

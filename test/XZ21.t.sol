@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Test, console} from "forge-std/Test.sol";
-import {XZ21} from "../src/XZ21.sol";
+import "forge-std/console.sol";
+import "forge-std/Test.sol";
+import "../src/XZ21.sol";
 
 contract XZ21Test is Test {
     XZ21 public xz21Contract;
@@ -13,12 +14,15 @@ contract XZ21Test is Test {
     address constant ADDR_SM    = 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496;
     address constant ADDR_TPA   = 0x9999999999999999999999999999999999999999;
     address constant ADDR_SP    = 0x8888888888888888888888888888888888888888;
-    address constant USER1_ADDR = 0x1111111111111111111111111111111111111111;
-    address constant USER2_ADDR = 0x2222222222222222222222222222222222222222;
+    address constant ADDR_USER1 = 0x1111111111111111111111111111111111111111;
+    address constant ADDR_USER2 = 0x2222222222222222222222222222222222222222;
+    string constant KEY_USER1   = "KEY1";
+    string constant KEY_USER2   = "KEY2";
 
     function setUp() public {
         //testContract = new XZ21(PAIRING, G, U, ADDR_SP, ADDR_TPA);
         xz21Contract = new XZ21(ADDR_TPA, ADDR_SP);
+        xz21Contract.EnrollAccount(KEY_USER1);
     }
 
     function testAccount() public view {
@@ -30,6 +34,9 @@ contract XZ21Test is Test {
 
         address addrSP = xz21Contract.GetAddrSP();
         assertEq(addrSP, ADDR_SP);
+
+        bool ret = xz21Contract.LookUpAccount(KEY_USER1);
+        assertTrue(ret);
     }
 
     function testPara() public {
@@ -39,13 +46,4 @@ contract XZ21Test is Test {
         assertEq(para.G, G);
         assertEq(para.U, U);
     }
-
-    // function testUpdateFileIndex() public {
-    //     regContract.updateFileIndex("1", USER1_ADDR);
-    //     regContract.updateFileIndex("1", USER2_ADDR);
-
-    //     XZ21.FileIndex memory fileIndex = regContract.readFileIndex("1");
-    //     assertEq(fileIndex.owners[0], USER1_ADDR);
-    //     assertEq(fileIndex.owners[1], USER2_ADDR);
-    // }
 }
