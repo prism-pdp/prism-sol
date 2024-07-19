@@ -8,8 +8,8 @@ contract XZ21 {
     address public addrSP;
     address public addrTPA;
 
-    mapping(bytes32 => Account) accountIndexTable;
-    mapping(string => FileIndex) private fileIndexTable;
+    mapping(address => Account) private accountIndexTable;
+    mapping(bytes32 => File) private fileIndexTable;
 
     struct Para {
         string Pairing;
@@ -21,8 +21,15 @@ contract XZ21 {
         string pubKey;
     }
 
-    struct FileIndex {
-        address[] owners; // Owner list
+    struct File {
+        bytes32 hash;
+        bytes32[] owners; // Owner list
+    }
+
+    modifier onlyBy(address _addr)
+    {
+        require(msg.sender == _addr);
+        _;
     }
 
     constructor(
@@ -33,6 +40,10 @@ contract XZ21 {
         addrSM = msg.sender;
         addrSP = _addrSP;
         addrTPA = _addrTPA;
+    }
+
+    function ReadFile(bytes32 _hash) internal view returns(File memory) {
+        return fileIndexTable[_hash];
     }
 
     function RegisterPara(
@@ -47,28 +58,37 @@ contract XZ21 {
     }
 
     function EnrollAccount(
-        string memory _pubKey
-    ) public
+        address _addr,
+        string calldata _pubKey
+    ) public onlyBy(addrSM)
     {
-        Account memory a = Account(_pubKey);
-        bytes32 id = keccak256(bytes(_pubKey));
-        accountIndexTable[id] = a;
+        accountIndexTable[_addr] = Account(_pubKey);
+    }
+
+    function AccountStatus() public view returns(bool) {
+        if (bytes(accountIndexTable[msg.sender].pubKey).length == 0) {
+            return false;
+        }
+        return true;
     }
 
     function GetPara() public view returns(Para memory) {
         return para;
     }
 
-    function createFileIndex(string memory _id, address _owner) public {
-        fileIndexTable[_id].owners.push(_owner);
+    function RegisterFile(bytes32 _hash, bytes32 _id) public {
+        fileIndexTable[_hash].hash = _hash;
+        fileIndexTable[_hash].owners.push(_id);
     }
 
-    function readFileIndex(string memory _id) public view returns(FileIndex memory) {
-        return fileIndexTable[_id];
+    function SearchFile(bytes32 _hash) public view returns(bool) {
+        if (fileIndexTable[_hash].hash == 0) {
+            return false;
+        }
+        return true;
     }
 
-    function updateFileIndex(string memory _id, address _owner) public {
-        fileIndexTable[_id].owners.push(_owner);
+    function AppendAccount() public {
     }
 
     function GetAddrSM() public view returns(address)
@@ -84,16 +104,5 @@ contract XZ21 {
     function GetAddrTPA() public view returns(address)
     {
         return addrTPA;
-    }
-
-    function LookUpAccount(string memory _pubKey) public view returns(bool)
-    {
-        bytes32 id = keccak256(bytes(_pubKey));
-        Account memory a = accountIndexTable[id];
-        if (bytes(a.pubKey).length == 0)
-        {
-            return false;
-        }
-        return true;
     }
 }
