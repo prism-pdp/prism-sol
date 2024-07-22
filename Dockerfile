@@ -27,4 +27,6 @@ RUN apk update \
 
 WORKDIR /app
 
-ENTRYPOINT [ "forge" ]
+COPY --chmod=755 ./docker/entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT [ "/entrypoint.sh" ]

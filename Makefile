@@ -5,8 +5,11 @@ IMAGE_NAME = dpduado-sol
 build-img:
 	docker build -t $(IMAGE_NAME) .	
 
+build-go:
+	docker run -it --rm --volume .:/app $(IMAGE_NAME) build
+
 shell:
-	docker run -it --rm --entrypoint sh $(IMAGE_NAME)
+	docker run -it --rm $(IMAGE_NAME)
 
 test:
-	docker run -it --rm --volume .:/app $(IMAGE_NAME) test -vvv
+	docker run -it --rm --volume .:/app $(IMAGE_NAME) forge test -vvv
