@@ -33,8 +33,8 @@ contract XZ21 {
     }
 
     constructor(
-        address _addrTPA,
-        address _addrSP
+        address _addrSP,
+        address _addrTPA
     )
     {
         addrSM = msg.sender;

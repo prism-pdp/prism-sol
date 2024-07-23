@@ -18,8 +18,8 @@ contract XZ21Test is Test {
     string constant KEY_USER3 = "KEY3";
 
     address ADDR_SM;
-    address ADDR_TPA;
     address ADDR_SP;
+    address ADDR_TPA;
     address ADDR_USER0;
     address ADDR_USER1;
     address ADDR_USER2;
@@ -28,8 +28,8 @@ contract XZ21Test is Test {
     function setUp() public {
         // Prepare variables
         ADDR_SM    = vm.addr(1000);
-        ADDR_TPA   = vm.addr(1001);
-        ADDR_SP    = vm.addr(1002);
+        ADDR_SP    = vm.addr(1001);
+        ADDR_TPA   = vm.addr(1002);
         ADDR_USER0 = vm.addr(2000); // dummy user
         ADDR_USER1 = vm.addr(2001);
         ADDR_USER2 = vm.addr(2002);
@@ -38,7 +38,7 @@ contract XZ21Test is Test {
         // c.RegisterFile(HASH_FILE2, keccak256(bytes(KEY_USER1)));
 
         vm.prank(ADDR_SM);
-        c = new XZ21(ADDR_TPA, ADDR_SP);
+        c = new XZ21(ADDR_SP, ADDR_TPA);
         vm.prank(ADDR_SM);
         c.RegisterPara(PAIRING, G, U);
         vm.prank(ADDR_SM);
