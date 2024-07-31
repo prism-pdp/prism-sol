@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
+
 contract XZ21 {
     Para para;
 
@@ -62,6 +64,7 @@ contract XZ21 {
         string calldata _pubKey
     ) public onlyBy(addrSM)
     {
+        console.log("Enroll SU account (Address:%s, PublicKey:%s)", _addr, _pubKey);
         accountIndexTable[_addr] = Account(_pubKey);
     }
 
@@ -86,23 +89,5 @@ contract XZ21 {
             return false;
         }
         return true;
-    }
-
-    function AppendAccount() public {
-    }
-
-    function GetAddrSM() public view returns(address)
-    {
-        return addrSM;
-    }
-
-    function GetAddrSP() public view returns(address)
-    {
-        return addrSP;
-    }
-
-    function GetAddrTPA() public view returns(address)
-    {
-        return addrTPA;
     }
 }

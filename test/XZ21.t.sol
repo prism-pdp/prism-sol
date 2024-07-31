@@ -50,13 +50,13 @@ contract XZ21Test is Test {
     }
 
     function testSetupPhase() public {
-        address addrSM = c.GetAddrSM();
+        address addrSM = c.addrSM();
         assertEq(addrSM, ADDR_SM);
 
-        address addrTPA = c.GetAddrTPA();
+        address addrTPA = c.addrTPA();
         assertEq(addrTPA, ADDR_TPA);
 
-        address addrSP = c.GetAddrSP();
+        address addrSP = c.addrSP();
         assertEq(addrSP, ADDR_SP);
 
         XZ21.Para memory para = c.GetPara();
