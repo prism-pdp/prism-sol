@@ -49,7 +49,7 @@ contract XZ21Test is Test {
         c.EnrollAccount(ADDR_USER3, KEY_USER3);
     }
 
-    function testSetupPhase() public {
+    function testSetupPhase() public view {
         address addrSM = c.addrSM();
         assertEq(addrSM, ADDR_SM);
 
@@ -64,17 +64,18 @@ contract XZ21Test is Test {
         assertEq(para.G, G);
         assertEq(para.U, U);
 
-        vm.prank(ADDR_USER1);
-        assertTrue(c.AccountStatus());
+        XZ21.Account memory su1 = c.GetAccount(ADDR_USER1);
+        assertEq(su1.pubKey, KEY_USER1);
 
-        vm.prank(ADDR_USER2);
-        assertTrue(c.AccountStatus());
+        XZ21.Account memory su2 = c.GetAccount(ADDR_USER2);
+        assertEq(su2.pubKey, KEY_USER2);
 
-        vm.prank(ADDR_USER3);
-        assertTrue(c.AccountStatus());
+        XZ21.Account memory su3 = c.GetAccount(ADDR_USER3);
+        assertEq(su3.pubKey, KEY_USER3);
 
-        vm.prank(ADDR_USER0);
-        assertFalse(c.AccountStatus());
+        XZ21.Account memory su0 = c.GetAccount(ADDR_USER0);
+        assertEq(su0.pubKey, "");
+
     }
 
     // function testPara() public view {
