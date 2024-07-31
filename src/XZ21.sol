@@ -69,7 +69,10 @@ contract XZ21 {
     }
 
     function AccountStatus() public view returns(bool) {
-        if (bytes(accountIndexTable[msg.sender].pubKey).length == 0) {
+        address addr = address(msg.sender);
+        console.log("1: %s", msg.sender);
+        console.log("2: %s", addr);
+        if (bytes(accountIndexTable[addr].pubKey).length == 0) {
             return false;
         }
         return true;
