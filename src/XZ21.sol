@@ -10,8 +10,8 @@ contract XZ21 {
     address public addrSP;
     address public addrTPA;
 
-    mapping(address => Account) private accountIndexTable;
-    mapping(bytes32 => File) private fileIndexTable;
+    mapping(address => Account) public accountIndexTable;
+    mapping(bytes32 => File) public fileIndexTable;
 
     struct Para {
         string Pairing;
@@ -68,14 +68,10 @@ contract XZ21 {
         accountIndexTable[_addr] = Account(_pubKey);
     }
 
-    function AccountStatus() public view returns(bool) {
-        address addr = address(msg.sender);
-        console.log("1: %s", msg.sender);
-        console.log("2: %s", addr);
-        if (bytes(accountIndexTable[addr].pubKey).length == 0) {
-            return false;
-        }
-        return true;
+    function GetAccount(
+        address _addr
+    ) public view returns(Account memory) {
+        return accountIndexTable[_addr];
     }
 
     function GetPara() public view returns(Para memory) {
