@@ -34,8 +34,6 @@ contract XZ21Test is Test {
         ADDR_USER1 = vm.addr(2001);
         ADDR_USER2 = vm.addr(2002);
         ADDR_USER3 = vm.addr(2003);
-        // c.RegisterFile(HASH_FILE1, keccak256(bytes(KEY_USER1)));
-        // c.RegisterFile(HASH_FILE2, keccak256(bytes(KEY_USER1)));
 
         vm.prank(ADDR_SM);
         c = new XZ21(ADDR_SP, ADDR_TPA);
@@ -75,7 +73,19 @@ contract XZ21Test is Test {
 
         XZ21.Account memory su0 = c.GetAccount(ADDR_USER0);
         assertEq(su0.pubKey, "");
+    }
 
+    function testUploadPhase() public {
+        vm.prank(ADDR_USER1);
+        bool isFound = c.SearchFile(HASH_FILE1);
+        assertFalse(isFound);
+
+        vm.prank(ADDR_SP);
+        c.RegisterFile(HASH_FILE1, ADDR_USER1);
+
+        vm.prank(ADDR_SP);
+        isFound = c.SearchFile(HASH_FILE1);
+        assertTrue(isFound);
     }
 
     // function testPara() public view {

@@ -25,7 +25,7 @@ contract XZ21 {
 
     struct File {
         bytes32 hash;
-        bytes32[] owners; // Owner list
+        address[] owners; // Owner list
     }
 
     modifier onlyBy(address _addr)
@@ -78,9 +78,9 @@ contract XZ21 {
         return para;
     }
 
-    function RegisterFile(bytes32 _hash, bytes32 _id) public {
+    function RegisterFile(bytes32 _hash, address _owner) public {
         fileIndexTable[_hash].hash = _hash;
-        fileIndexTable[_hash].owners.push(_id);
+        fileIndexTable[_hash].owners.push(_owner);
     }
 
     function SearchFile(bytes32 _hash) public view returns(bool) {
