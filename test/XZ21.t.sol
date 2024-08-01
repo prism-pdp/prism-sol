@@ -8,7 +8,7 @@ import "../src/XZ21.sol";
 contract XZ21Test is Test {
     XZ21 public c;
 
-    string constant PAIRING = "test-value(pairing)";
+    string constant PARAM = "test-value(param)";
     bytes constant G = "0xAA";
     bytes constant U = "0xBB";
     bytes32 constant HASH_FILE1 = keccak256("File1");
@@ -38,7 +38,7 @@ contract XZ21Test is Test {
         vm.prank(ADDR_SM);
         c = new XZ21(ADDR_SP, ADDR_TPA);
         vm.prank(ADDR_SM);
-        c.RegisterPara(PAIRING, G, U);
+        c.RegisterPara(PARAM, G, U);
         vm.prank(ADDR_SM);
         c.EnrollAccount(ADDR_USER1, KEY_USER1);
         vm.prank(ADDR_SM);
@@ -58,7 +58,7 @@ contract XZ21Test is Test {
         assertEq(addrSP, ADDR_SP);
 
         XZ21.Para memory para = c.GetPara();
-        assertEq(para.Pairing, PAIRING);
+        assertEq(para.Param, PARAM);
         assertEq(para.G, G);
         assertEq(para.U, U);
 
@@ -90,7 +90,7 @@ contract XZ21Test is Test {
 
     // function testPara() public view {
     //     XZ21.Para memory para = c.GetPara();
-    //     assertEq(para.Pairing, PAIRING);
+    //     assertEq(para.PARAM, PARAM);
     //     assertEq(para.G, G);
     //     assertEq(para.U, U);
     // }
