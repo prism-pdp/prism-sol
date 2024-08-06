@@ -13,9 +13,9 @@ contract XZ21Test is Test {
     bytes constant U = "0xBB";
     bytes32 constant HASH_FILE1 = keccak256("File1");
     bytes32 constant HASH_FILE2 = keccak256("File2");
-    string constant KEY_USER1 = "KEY1";
-    string constant KEY_USER2 = "KEY2";
-    string constant KEY_USER3 = "KEY3";
+    bytes constant KEY_USER1 = "0x11";
+    bytes constant KEY_USER2 = "0x12";
+    bytes constant KEY_USER3 = "0x13";
 
     address ADDR_SM;
     address ADDR_SP;

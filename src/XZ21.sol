@@ -20,7 +20,7 @@ contract XZ21 {
     }
 
     struct Account {
-        string pubKey;
+        bytes pubKey;
     }
 
     struct File {
@@ -61,10 +61,10 @@ contract XZ21 {
 
     function EnrollAccount(
         address _addr,
-        string calldata _pubKey
+        bytes calldata _pubKey
     ) public onlyBy(addrSM)
     {
-        console.log("Enroll SU account (Address:%s, PublicKey:%s)", _addr, _pubKey);
+        console.log("Enroll SU account (Address:%s)", _addr);
         accountIndexTable[_addr] = Account(_pubKey);
     }
 
