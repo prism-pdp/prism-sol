@@ -14,7 +14,7 @@ contract XZ21 {
     mapping(bytes32 => File) public fileIndexTable;
 
     struct Para {
-        string Param;
+        string Params;
         bytes U;
         bytes G;
     }
@@ -49,12 +49,12 @@ contract XZ21 {
     }
 
     function RegisterPara(
-        string memory _param,
+        string memory _params,
         bytes memory _g,
         bytes memory _u
     ) public
     {
-        para.Param = _param;
+        para.Params = _params;
         para.U = _u;
         para.G = _g;
     }

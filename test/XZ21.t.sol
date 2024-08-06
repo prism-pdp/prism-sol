@@ -58,7 +58,7 @@ contract XZ21Test is Test {
         assertEq(addrSP, ADDR_SP);
 
         XZ21.Para memory para = c.GetPara();
-        assertEq(para.Param, PARAM);
+        assertEq(para.Params, PARAM);
         assertEq(para.G, G);
         assertEq(para.U, U);
 
