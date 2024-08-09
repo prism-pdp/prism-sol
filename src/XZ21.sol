@@ -10,8 +10,8 @@ contract XZ21 {
     address public addrSP;
     address public addrTPA;
 
-    mapping(address => Account) public accountIndexTable;
-    mapping(bytes32 => File) public fileIndexTable;
+    mapping(address => Account) private accountIndexTable;
+    mapping(bytes32 => File) private fileIndexTable;
 
     struct Para {
         string Params;
@@ -24,7 +24,6 @@ contract XZ21 {
     }
 
     struct File {
-        bytes32 hash;
         address[] owners; // Owner list
     }
 
@@ -44,7 +43,7 @@ contract XZ21 {
         addrTPA = _addrTPA;
     }
 
-    function ReadFile(bytes32 _hash) internal view returns(File memory) {
+    function ReadFile(bytes32 _hash) public view returns(File memory) {
         return fileIndexTable[_hash];
     }
 
@@ -79,12 +78,11 @@ contract XZ21 {
     }
 
     function RegisterFile(bytes32 _hash, address _owner) public {
-        fileIndexTable[_hash].hash = _hash;
         fileIndexTable[_hash].owners.push(_owner);
     }
 
     function SearchFile(bytes32 _hash) public view returns(bool) {
-        if (fileIndexTable[_hash].hash == 0) {
+        if (fileIndexTable[_hash].owners.length == 0) {
             return false;
         }
         return true;
