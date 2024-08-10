@@ -11,7 +11,7 @@ contract XZ21 {
     address public addrTPA;
 
     mapping(address => Account) private accountIndexTable;
-    mapping(bytes32 => File) private fileIndexTable;
+    mapping(bytes32 => FileProperty) private fileIndexTable;
 
     struct Para {
         string Params;
@@ -23,7 +23,7 @@ contract XZ21 {
         bytes pubKey;
     }
 
-    struct File {
+    struct FileProperty {
         address[] owners; // Owner list
     }
 
@@ -43,7 +43,7 @@ contract XZ21 {
         addrTPA = _addrTPA;
     }
 
-    function ReadFile(bytes32 _hash) public view returns(File memory) {
+    function ReadFile(bytes32 _hash) public view returns(FileProperty memory) {
         return fileIndexTable[_hash];
     }
 
