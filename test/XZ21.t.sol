@@ -77,15 +77,17 @@ contract XZ21Test is Test {
 
     function testUploadPhase() public {
         vm.prank(ADDR_USER1);
-        bool isFound = c.SearchFile(HASH_FILE1);
-        assertFalse(isFound);
+        XZ21.FileProperty memory fileProp = c.FetchFileProperty(HASH_FILE1);
+        assertEq(0, fileProp.owners.length);
+        assertEq(0, fileProp.splitNum);
 
         vm.prank(ADDR_SP);
-        c.RegisterFile(HASH_FILE1, ADDR_USER1);
+        c.RegisterFileProperty(HASH_FILE1, 9, ADDR_USER1);
 
         vm.prank(ADDR_SP);
-        isFound = c.SearchFile(HASH_FILE1);
-        assertTrue(isFound);
+        fileProp = c.FetchFileProperty(HASH_FILE1);
+        assertEq(1, fileProp.owners.length);
+        assertEq(9, fileProp.splitNum);
     }
 
     // function testPara() public view {

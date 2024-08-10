@@ -24,6 +24,7 @@ contract XZ21 {
     }
 
     struct FileProperty {
+        uint32 splitNum;
         address[] owners; // Owner list
     }
 
@@ -77,14 +78,12 @@ contract XZ21 {
         return para;
     }
 
-    function RegisterFile(bytes32 _hash, address _owner) public {
+    function RegisterFileProperty(bytes32 _hash, uint32 _splitNum, address _owner) public {
+        fileIndexTable[_hash].splitNum = _splitNum;
         fileIndexTable[_hash].owners.push(_owner);
     }
 
-    function SearchFile(bytes32 _hash) public view returns(bool) {
-        if (fileIndexTable[_hash].owners.length == 0) {
-            return false;
-        }
-        return true;
+    function FetchFileProperty(bytes32 _hash) public view returns(FileProperty memory) {
+        return fileIndexTable[_hash];
     }
 }
