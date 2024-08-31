@@ -13,9 +13,9 @@ contract XZ21Test is Test {
     bytes constant U = "0xBB";
     bytes32 constant HASH_FILE1 = keccak256("File1");
     bytes32 constant HASH_FILE2 = keccak256("File2");
-    bytes constant KEY_USER1 = "0x11";
-    bytes constant KEY_USER2 = "0x12";
-    bytes constant KEY_USER3 = "0x13";
+    bytes constant KEY_USER1 = "0x1111";
+    bytes constant KEY_USER2 = "0x1212";
+    bytes constant KEY_USER3 = "0x1313";
 
     address ADDR_SM;
     address ADDR_SP;
@@ -99,6 +99,38 @@ contract XZ21Test is Test {
         vm.prank(ADDR_USER2);
         bytes32[] memory fileList2 = c.FetchFileList(ADDR_USER2);
         assertEq(fileList2[0], HASH_FILE2);
+    }
+
+    function testAuditing() public {
+        bytes memory chal1 = "chal1";
+        bytes memory chal2 = "chal2";
+        bytes memory proof1 = "proof1";
+        bytes memory proof2 = "proof2";
+
+        vm.prank(ADDR_USER1);
+        c.UploadChal(HASH_FILE1, chal1);
+        vm.prank(ADDR_USER1);
+        c.UploadChal(HASH_FILE2, chal2);
+
+        vm.prank(ADDR_SP);
+        (bytes32[] memory fileList, bytes[] memory chalList) = c.DownloadChalList();
+        assertEq(fileList[0], HASH_FILE1);
+        assertEq(chalList[0], chal1);
+        assertEq(fileList[1], HASH_FILE2);
+        assertEq(chalList[1], chal2);
+
+        vm.prank(ADDR_SP);
+        c.UploadProof(fileList[0], proof1);
+        vm.prank(ADDR_SP);
+        c.UploadProof(fileList[1], proof2);
+
+        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList) = c.DownloadAuditingReqList();
+        assertEq(fileList2[0], HASH_FILE1);
+        assertEq(reqList[0].chal, chal1);
+        assertEq(reqList[0].proof, proof1);
+        assertEq(fileList2[1], HASH_FILE2);
+        assertEq(reqList[1].chal, chal2);
+        assertEq(reqList[1].proof, proof2);
     }
 
     // function testPara() public view {

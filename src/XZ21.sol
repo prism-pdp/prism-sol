@@ -12,6 +12,11 @@ contract XZ21 {
 
     mapping(address => Account) private accountIndexTable;
     mapping(bytes32 => FileProperty) private fileIndexTable;
+    mapping(bytes32 => AuditingReq) private auditingReqTable;
+    mapping(bytes32 => AuditingLog[]) private auditingLogTable;
+
+    bytes32[] chalUploaded;
+    bytes32[] proofUploaded;
 
     struct Param {
         string P;
@@ -27,6 +32,17 @@ contract XZ21 {
     struct FileProperty {
         uint32 splitNum;
         address creator; // Owner list
+    }
+
+    struct AuditingReq {
+        bytes chal;
+        bytes proof;
+    }
+
+    struct AuditingLog {
+        bytes chal;
+        bytes proof;
+        bool result;
     }
 
     modifier onlyBy(address _addr)
@@ -103,4 +119,44 @@ contract XZ21 {
         require(fileIndexTable[_hash].splitNum > 0, "invalid file");
         accountIndexTable[_owner].fileList.push(_hash);
     }
+
+    function UploadChal(bytes32 _hash, bytes calldata _chal) public {
+        AuditingReq memory req = AuditingReq(_chal, "");
+        auditingReqTable[_hash] = req; // TODO: check overwrite
+        chalUploaded.push(_hash); // TODO: check duplicate push
+    }
+
+    function DownloadChalList() public view returns(bytes32[] memory, bytes[] memory) {
+        uint num = chalUploaded.length;
+        bytes32[] memory fileList = new bytes32[](num);
+        bytes[] memory chalList = new bytes[](num);
+        for (uint i = 0; i < num; i++) {
+            bytes32 h = chalUploaded[i];
+            fileList[i] = h;
+            chalList[i] = auditingReqTable[h].chal;
+        }
+        return (fileList, chalList);
+    }
+
+    function UploadProof(bytes32 _hash, bytes calldata _proof) public {
+        // TODO: remove _hash from chalUploaded
+        auditingReqTable[_hash].proof = _proof;
+        proofUploaded.push(_hash);
+    }
+
+    function DownloadAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
+        uint num = proofUploaded.length;
+        bytes32[] memory fileList = new bytes32[](num);
+        AuditingReq[] memory reqList = new AuditingReq[](num);
+        for (uint i = 0; i < num; i++) {
+            bytes32 h = chalUploaded[i];
+            fileList[i] = h;
+            reqList[i] = auditingReqTable[h];
+        }
+        return (fileList, reqList);
+    }
+
+    //function DownloadAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
+        //return auditingLogTable[_hash];
+    //}
 }
