@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 
 contract XZ21 {
-    Para para;
+    Param param;
 
     address public addrSM;
     address public addrSP;
@@ -13,19 +13,20 @@ contract XZ21 {
     mapping(address => Account) private accountIndexTable;
     mapping(bytes32 => FileProperty) private fileIndexTable;
 
-    struct Para {
-        string Params;
+    struct Param {
+        string P;
         bytes U;
         bytes G;
     }
 
     struct Account {
         bytes pubKey;
+        bytes32[] fileList;
     }
 
     struct FileProperty {
         uint32 splitNum;
-        address[] owners; // Owner list
+        address creator; // Owner list
     }
 
     modifier onlyBy(address _addr)
@@ -48,15 +49,15 @@ contract XZ21 {
         return fileIndexTable[_hash];
     }
 
-    function RegisterPara(
-        string memory _params,
+    function RegisterParam(
+        string memory _p,
         bytes memory _g,
         bytes memory _u
     ) public
     {
-        para.Params = _params;
-        para.U = _u;
-        para.G = _g;
+        param.P = _p;
+        param.U = _u;
+        param.G = _g;
     }
 
     function EnrollAccount(
@@ -65,7 +66,7 @@ contract XZ21 {
     ) public onlyBy(addrSM)
     {
         console.log("Enroll SU account (Address:%s)", _addr);
-        accountIndexTable[_addr] = Account(_pubKey);
+        accountIndexTable[_addr] = Account(_pubKey, new bytes32[](0));
     }
 
     function GetAccount(
@@ -74,16 +75,32 @@ contract XZ21 {
         return accountIndexTable[_addr];
     }
 
-    function GetPara() public view returns(Para memory) {
-        return para;
+    function GetParam() public view returns(Param memory) {
+        return param;
     }
 
-    function RegisterFileProperty(bytes32 _hash, uint32 _splitNum, address _owner) public {
+    function RegisterFile(bytes32 _hash, uint32 _splitNum, address _owner) public {
+        require(_splitNum > 0, "invalid split num");
         fileIndexTable[_hash].splitNum = _splitNum;
-        fileIndexTable[_hash].owners.push(_owner);
+        fileIndexTable[_hash].creator = _owner;
+        accountIndexTable[_owner].fileList.push(_hash);
     }
 
-    function FetchFileProperty(bytes32 _hash) public view returns(FileProperty memory) {
+    function SearchFile(bytes32 _hash) public view returns(FileProperty memory) {
         return fileIndexTable[_hash];
+    }
+
+    function FetchFileList(address _owner) public view returns(bytes32[] memory) {
+        uint fileListLength = accountIndexTable[_owner].fileList.length;
+        bytes32[] memory fileList = new bytes32[](fileListLength);
+        for(uint i = 0; i < accountIndexTable[_owner].fileList.length; i++) {
+            fileList[i] = accountIndexTable[_owner].fileList[i];
+        }
+        return fileList;
+    }
+
+    function AppendOwner(bytes32 _hash, address _owner) public {
+        require(fileIndexTable[_hash].splitNum > 0, "invalid file");
+        accountIndexTable[_owner].fileList.push(_hash);
     }
 }

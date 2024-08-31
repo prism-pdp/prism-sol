@@ -8,7 +8,7 @@ import "../src/XZ21.sol";
 contract XZ21Test is Test {
     XZ21 public c;
 
-    string constant PARAM = "test-value(param)";
+    string constant P = "test parameter";
     bytes constant G = "0xAA";
     bytes constant U = "0xBB";
     bytes32 constant HASH_FILE1 = keccak256("File1");
@@ -38,7 +38,7 @@ contract XZ21Test is Test {
         vm.prank(ADDR_SM);
         c = new XZ21(ADDR_SP, ADDR_TPA);
         vm.prank(ADDR_SM);
-        c.RegisterPara(PARAM, G, U);
+        c.RegisterParam(P, G, U);
         vm.prank(ADDR_SM);
         c.EnrollAccount(ADDR_USER1, KEY_USER1);
         vm.prank(ADDR_SM);
@@ -57,10 +57,10 @@ contract XZ21Test is Test {
         address addrSP = c.addrSP();
         assertEq(addrSP, ADDR_SP);
 
-        XZ21.Para memory para = c.GetPara();
-        assertEq(para.Params, PARAM);
-        assertEq(para.G, G);
-        assertEq(para.U, U);
+        XZ21.Param memory param = c.GetParam();
+        assertEq(param.P, P);
+        assertEq(param.G, G);
+        assertEq(param.U, U);
 
         XZ21.Account memory su1 = c.GetAccount(ADDR_USER1);
         assertEq(su1.pubKey, KEY_USER1);
@@ -77,17 +77,28 @@ contract XZ21Test is Test {
 
     function testUploadPhase() public {
         vm.prank(ADDR_USER1);
-        XZ21.FileProperty memory fileProp = c.FetchFileProperty(HASH_FILE1);
-        assertEq(0, fileProp.owners.length);
+        XZ21.FileProperty memory fileProp = c.SearchFile(HASH_FILE1);
+        assertEq(address(0), fileProp.creator);
         assertEq(0, fileProp.splitNum);
 
         vm.prank(ADDR_SP);
-        c.RegisterFileProperty(HASH_FILE1, 9, ADDR_USER1);
+        c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
+        c.RegisterFile(HASH_FILE2, 20, ADDR_USER1);
+        c.AppendOwner(HASH_FILE2, ADDR_USER2);
 
         vm.prank(ADDR_SP);
-        fileProp = c.FetchFileProperty(HASH_FILE1);
-        assertEq(1, fileProp.owners.length);
+        fileProp = c.SearchFile(HASH_FILE1);
+        assertEq(ADDR_USER1, fileProp.creator);
         assertEq(9, fileProp.splitNum);
+
+        vm.prank(ADDR_USER1);
+        bytes32[] memory fileList1 = c.FetchFileList(ADDR_USER1);
+        assertEq(fileList1[0], HASH_FILE1);
+        assertEq(fileList1[1], HASH_FILE2);
+
+        vm.prank(ADDR_USER2);
+        bytes32[] memory fileList2 = c.FetchFileList(ADDR_USER2);
+        assertEq(fileList2[0], HASH_FILE2);
     }
 
     // function testPara() public view {
