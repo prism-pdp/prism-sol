@@ -15,8 +15,8 @@ contract XZ21 {
     mapping(bytes32 => AuditingReq) private auditingReqTable;
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
-    bytes32[] chalUploaded;
-    bytes32[] proofUploaded;
+    bytes32[] chalBuffer;
+    bytes32[] auditingReqList;
 
     struct Param {
         string P;
@@ -106,7 +106,7 @@ contract XZ21 {
         return fileIndexTable[_hash];
     }
 
-    function FetchFileList(address _owner) public view returns(bytes32[] memory) {
+    function GetFileList(address _owner) public view returns(bytes32[] memory) {
         uint fileListLength = accountIndexTable[_owner].fileList.length;
         bytes32[] memory fileList = new bytes32[](fileListLength);
         for(uint i = 0; i < accountIndexTable[_owner].fileList.length; i++) {
@@ -120,43 +120,85 @@ contract XZ21 {
         accountIndexTable[_owner].fileList.push(_hash);
     }
 
-    function UploadChal(bytes32 _hash, bytes calldata _chal) public {
+    function SetChal(bytes32 _hash, bytes calldata _chal) public {
         AuditingReq memory req = AuditingReq(_chal, "");
         auditingReqTable[_hash] = req; // TODO: check overwrite
-        chalUploaded.push(_hash); // TODO: check duplicate push
+        chalBuffer.push(_hash); // TODO: check duplicate push
     }
 
-    function DownloadChalList() public view returns(bytes32[] memory, bytes[] memory) {
-        uint num = chalUploaded.length;
+    function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {
+        uint num = chalBuffer.length;
         bytes32[] memory fileList = new bytes32[](num);
         bytes[] memory chalList = new bytes[](num);
         for (uint i = 0; i < num; i++) {
-            bytes32 h = chalUploaded[i];
+            bytes32 h = chalBuffer[i];
             fileList[i] = h;
             chalList[i] = auditingReqTable[h].chal;
         }
         return (fileList, chalList);
     }
 
-    function UploadProof(bytes32 _hash, bytes calldata _proof) public {
-        // TODO: remove _hash from chalUploaded
+    function SetProof(bytes32 _hash, bytes calldata _proof) public {
+        bool found = false;
+        uint found_index = 0;
+        for (uint i = 0; i < chalBuffer.length; i++) {
+            if (_hash == chalBuffer[i]) {
+                found = true;
+                found_index = i;
+                break;
+            }
+        }
+
+        require(found, "Unknown hash value");
+
         auditingReqTable[_hash].proof = _proof;
-        proofUploaded.push(_hash);
+        auditingReqList.push(_hash);
+
+        for (uint i = found_index; i < chalBuffer.length - 1; i++) {
+            chalBuffer[i] = chalBuffer[i+1];
+        }
+        chalBuffer.pop();
     }
 
-    function DownloadAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
-        uint num = proofUploaded.length;
+    function GetAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
+        uint num = auditingReqList.length;
         bytes32[] memory fileList = new bytes32[](num);
         AuditingReq[] memory reqList = new AuditingReq[](num);
         for (uint i = 0; i < num; i++) {
-            bytes32 h = chalUploaded[i];
+            bytes32 h = auditingReqList[i];
             fileList[i] = h;
             reqList[i] = auditingReqTable[h];
         }
         return (fileList, reqList);
     }
 
-    //function DownloadAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
-        //return auditingLogTable[_hash];
-    //}
+    function SetAuditingResult(bytes32 _hash, bool _result) public {
+        bool found = false;
+        uint found_index = 0;
+        for (uint i = 0; i < auditingReqList.length; i++) {
+            if (_hash == auditingReqList[i]) {
+                found = true;
+                found_index = i;
+                break;
+            }
+        }
+
+        require(found, "Unknown hash value");
+
+        AuditingLog memory log = AuditingLog(
+            auditingReqTable[_hash].chal,
+            auditingReqTable[_hash].proof,
+            _result
+        );
+        auditingLogTable[_hash].push(log);
+
+        for (uint i = found_index; i < auditingReqList.length - 1; i++) {
+            auditingReqList[i] = auditingReqList[i+1];
+        }
+        auditingReqList.pop();
+    }
+
+    function GetAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
+        return auditingLogTable[_hash];
+    }
 }

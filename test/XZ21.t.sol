@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import "forge-std/Test.sol";
 import "../src/XZ21.sol";
 
@@ -92,12 +91,12 @@ contract XZ21Test is Test {
         assertEq(9, fileProp.splitNum);
 
         vm.prank(ADDR_USER1);
-        bytes32[] memory fileList1 = c.FetchFileList(ADDR_USER1);
+        bytes32[] memory fileList1 = c.GetFileList(ADDR_USER1);
         assertEq(fileList1[0], HASH_FILE1);
         assertEq(fileList1[1], HASH_FILE2);
 
         vm.prank(ADDR_USER2);
-        bytes32[] memory fileList2 = c.FetchFileList(ADDR_USER2);
+        bytes32[] memory fileList2 = c.GetFileList(ADDR_USER2);
         assertEq(fileList2[0], HASH_FILE2);
     }
 
@@ -107,30 +106,64 @@ contract XZ21Test is Test {
         bytes memory proof1 = "proof1";
         bytes memory proof2 = "proof2";
 
+        // USER1 reqests audiging of FILE1 and FILE2.
         vm.prank(ADDR_USER1);
-        c.UploadChal(HASH_FILE1, chal1);
+        c.SetChal(HASH_FILE1, chal1);
         vm.prank(ADDR_USER1);
-        c.UploadChal(HASH_FILE2, chal2);
+        c.SetChal(HASH_FILE2, chal2);
 
+        // SP downloads the list of chal.
         vm.prank(ADDR_SP);
-        (bytes32[] memory fileList, bytes[] memory chalList) = c.DownloadChalList();
+        (bytes32[] memory fileList, bytes[] memory chalList) = c.GetChalList();
         assertEq(fileList[0], HASH_FILE1);
         assertEq(chalList[0], chal1);
         assertEq(fileList[1], HASH_FILE2);
         assertEq(chalList[1], chal2);
 
+        // SP uploads the proof for each chal.
         vm.prank(ADDR_SP);
-        c.UploadProof(fileList[0], proof1);
+        c.SetProof(fileList[0], proof1);
         vm.prank(ADDR_SP);
-        c.UploadProof(fileList[1], proof2);
+        c.SetProof(fileList[1], proof2);
 
-        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList) = c.DownloadAuditingReqList();
+        // TPA downloads the list of auditing reqs (chal and proof).
+        vm.prank(ADDR_TPA);
+        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
         assertEq(fileList2[0], HASH_FILE1);
         assertEq(reqList[0].chal, chal1);
         assertEq(reqList[0].proof, proof1);
         assertEq(fileList2[1], HASH_FILE2);
         assertEq(reqList[1].chal, chal2);
         assertEq(reqList[1].proof, proof2);
+
+        // TPA uploads the auditing result.
+        vm.prank(ADDR_TPA);
+        c.SetAuditingResult(fileList2[0], false);
+        vm.prank(ADDR_TPA);
+        c.SetAuditingResult(fileList2[1], true);
+
+        // USER1 checks the auditing result.
+        vm.prank(ADDR_USER1);
+        XZ21.AuditingLog[] memory logs = c.GetAuditingLogs(HASH_FILE1);
+        assertEq(logs.length, 1);
+        assertEq(logs[0].chal, chal1);
+        assertEq(logs[0].proof, proof1);
+        assertEq(logs[0].result, false);
+
+        // =============================
+        // check status after auditing
+        // =============================
+
+        // blank chal list
+        vm.prank(ADDR_SP);
+        (bytes32[] memory fileList1_After, bytes[] memory chalList1_After) = c.GetChalList();
+        assertEq(fileList1_After.length, 0);
+        assertEq(chalList1_After.length, 0);
+
+        vm.prank(ADDR_TPA);
+        (bytes32[] memory fileList2_After, XZ21.AuditingReq[] memory reqList2_After) = c.GetAuditingReqList();
+        assertEq(fileList2_After.length, 0);
+        assertEq(reqList2_After.length, 0);
     }
 
     // function testPara() public view {
