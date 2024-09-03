@@ -120,10 +120,17 @@ contract XZ21 {
         accountIndexTable[_owner].fileList.push(_hash);
     }
 
-    function SetChal(bytes32 _hash, bytes calldata _chal) public {
+    function SetChal(bytes32 _hash, bytes calldata _chal) public returns(bool) {
+        if (auditingReqTable[_hash].chal.length > 0) {
+            return false;
+        }
+
         AuditingReq memory req = AuditingReq(_chal, "");
-        auditingReqTable[_hash] = req; // TODO: check overwrite
+        auditingReqTable[_hash] = req;
+
         chalBuffer.push(_hash); // TODO: check duplicate push
+
+        return true;
     }
 
     function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {

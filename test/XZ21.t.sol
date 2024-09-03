@@ -108,9 +108,11 @@ contract XZ21Test is Test {
 
         // USER1 reqests audiging of FILE1 and FILE2.
         vm.prank(ADDR_USER1);
-        c.SetChal(HASH_FILE1, chal1);
+        bool setChal1 = c.SetChal(HASH_FILE1, chal1);
+        assertEq(setChal1, true);
         vm.prank(ADDR_USER1);
-        c.SetChal(HASH_FILE2, chal2);
+        bool setChal2 = c.SetChal(HASH_FILE2, chal2);
+        assertEq(setChal2, true);
 
         // SP downloads the list of chal.
         vm.prank(ADDR_SP);
