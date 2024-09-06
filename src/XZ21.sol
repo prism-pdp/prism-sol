@@ -45,6 +45,8 @@ contract XZ21 {
         bool result;
     }
 
+    event Result(address indexed _from, string _msg);
+
     modifier onlyBy(address _addr)
     {
         require(msg.sender == _addr);
@@ -120,9 +122,9 @@ contract XZ21 {
         accountIndexTable[_owner].fileList.push(_hash);
     }
 
-    function SetChal(bytes32 _hash, bytes calldata _chal) public returns(bool) {
+    function SetChal(bytes32 _hash, bytes calldata _chal) public {
         if (auditingReqTable[_hash].chal.length > 0) {
-            return false;
+            emit Result(msg.sender, "Skip");
         }
 
         AuditingReq memory req = AuditingReq(_chal, "");
@@ -130,7 +132,7 @@ contract XZ21 {
 
         chalBuffer.push(_hash); // TODO: check duplicate push
 
-        return true;
+        emit Result(msg.sender, "Success");
     }
 
     function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {
