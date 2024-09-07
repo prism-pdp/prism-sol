@@ -125,23 +125,11 @@ contract XZ21 {
     function SetChal(bytes32 _hash, bytes calldata _chal) public {
         if (auditingReqTable[_hash].chal.length > 0) {
             emit Result(msg.sender, _hash, "Skip");
-        }
-
-        bool found = false;
-        for (uint i = 0; i < chalBuffer.length; i++) {
-            if (_hash == chalBuffer[i]) {
-                found = true;
-                break;
-            }
-        }
-
-        if (found == false) {
+        } else {
             AuditingReq memory req = AuditingReq(_chal, "");
             auditingReqTable[_hash] = req;
             chalBuffer.push(_hash);
             emit Result(msg.sender, _hash, "Success");
-        } else {
-            emit Result(msg.sender, _hash, "Skip");
         }
     }
 
