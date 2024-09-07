@@ -199,6 +199,11 @@ contract XZ21 {
         );
         auditingLogTable[_hash].push(log);
 
+        // Remove AuditingReq from the map
+        auditingReqTable[_hash].chal = "";
+        auditingReqTable[_hash].proof = "";
+
+        // Remove hash from the list
         for (uint i = found_index; i < auditingReqList.length - 1; i++) {
             auditingReqList[i] = auditingReqList[i+1];
         }
