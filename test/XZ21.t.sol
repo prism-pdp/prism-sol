@@ -117,6 +117,12 @@ contract XZ21Test is Test {
         emit XZ21.Result(ADDR_USER1, HASH_FILE2, "Success");
         c.SetChal(HASH_FILE2, chal2);
 
+        // USER1 reqests audiging of FILE2 (duplication).
+        vm.prank(ADDR_USER1);
+        vm.expectEmit(true, false, false, true);
+        emit XZ21.Result(ADDR_USER1, HASH_FILE2, "Skip");
+        c.SetChal(HASH_FILE2, chal2);
+
         // SP downloads the list of chal.
         vm.prank(ADDR_SP);
         (bytes32[] memory fileList, bytes[] memory chalList) = c.GetChalList();
@@ -124,6 +130,8 @@ contract XZ21Test is Test {
         assertEq(chalList[0], chal1);
         assertEq(fileList[1], HASH_FILE2);
         assertEq(chalList[1], chal2);
+        assertEq(fileList.length, 2);
+        assertEq(chalList.length, 2);
 
         // SP uploads the proof for each chal.
         vm.prank(ADDR_SP);

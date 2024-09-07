@@ -127,12 +127,22 @@ contract XZ21 {
             emit Result(msg.sender, _hash, "Skip");
         }
 
-        AuditingReq memory req = AuditingReq(_chal, "");
-        auditingReqTable[_hash] = req;
+        bool found = false;
+        for (uint i = 0; i < chalBuffer.length; i++) {
+            if (_hash == chalBuffer[i]) {
+                found = true;
+                break;
+            }
+        }
 
-        chalBuffer.push(_hash); // TODO: check duplicate push
-
-        emit Result(msg.sender, _hash, "Success");
+        if (found == false) {
+            AuditingReq memory req = AuditingReq(_chal, "");
+            auditingReqTable[_hash] = req;
+            chalBuffer.push(_hash);
+            emit Result(msg.sender, _hash, "Success");
+        } else {
+            emit Result(msg.sender, _hash, "Skip");
+        }
     }
 
     function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {
