@@ -108,19 +108,14 @@ contract XZ21Test is Test {
 
         // USER1 reqests audiging of FILE1 and FILE2.
         vm.prank(ADDR_USER1);
-        vm.expectEmit(true, false, false, true);
-        emit XZ21.Result(ADDR_USER1, HASH_FILE1, "Success");
         c.SetChal(HASH_FILE1, chal1);
 
         vm.prank(ADDR_USER1);
-        vm.expectEmit(true, false, false, true);
-        emit XZ21.Result(ADDR_USER1, HASH_FILE2, "Success");
         c.SetChal(HASH_FILE2, chal2);
 
         // USER1 reqests audiging of FILE2 (duplication).
         vm.prank(ADDR_USER1);
-        vm.expectEmit(true, false, false, true);
-        emit XZ21.Result(ADDR_USER1, HASH_FILE2, "Skip");
+        vm.expectRevert(bytes("chal is already set."));
         c.SetChal(HASH_FILE2, chal2);
 
         // SP downloads the list of chal.
@@ -151,8 +146,12 @@ contract XZ21Test is Test {
 
         // TPA uploads the auditing result.
         vm.prank(ADDR_TPA);
+        vm.expectEmit(false, false, false, true);
+        emit XZ21.EventSetAuditingResult(fileList2[0], false);
         c.SetAuditingResult(fileList2[0], false);
         vm.prank(ADDR_TPA);
+        vm.expectEmit(false, false, false, true);
+        emit XZ21.EventSetAuditingResult(fileList2[1], true);
         c.SetAuditingResult(fileList2[1], true);
 
         // USER1 checks the auditing result.

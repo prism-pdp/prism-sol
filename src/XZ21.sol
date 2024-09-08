@@ -16,7 +16,7 @@ contract XZ21 {
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
     bytes32[] chalBuffer;
-    bytes32[] auditingReqList;
+    bytes32[] proofBuffer;
 
     struct Param {
         string P;
@@ -45,7 +45,7 @@ contract XZ21 {
         bool result;
     }
 
-    event Result(address indexed _from, bytes32 _hash, string _msg);
+    event EventSetAuditingResult(bytes32 _hash, bool _result);
 
     modifier onlyBy(address _addr)
     {
@@ -99,6 +99,7 @@ contract XZ21 {
 
     function RegisterFile(bytes32 _hash, uint32 _splitNum, address _owner) public {
         require(_splitNum > 0, "invalid split num");
+
         fileIndexTable[_hash].splitNum = _splitNum;
         fileIndexTable[_hash].creator = _owner;
         accountIndexTable[_owner].fileList.push(_hash);
@@ -119,18 +120,16 @@ contract XZ21 {
 
     function AppendOwner(bytes32 _hash, address _owner) public {
         require(fileIndexTable[_hash].splitNum > 0, "invalid file");
+
         accountIndexTable[_owner].fileList.push(_hash);
     }
 
     function SetChal(bytes32 _hash, bytes calldata _chal) public {
-        if (auditingReqTable[_hash].chal.length > 0) {
-            emit Result(msg.sender, _hash, "Skip");
-        } else {
-            AuditingReq memory req = AuditingReq(_chal, "");
-            auditingReqTable[_hash] = req;
-            chalBuffer.push(_hash);
-            emit Result(msg.sender, _hash, "Success");
-        }
+        require(auditingReqTable[_hash].chal.length == 0, "chal is already set.");
+
+        AuditingReq memory req = AuditingReq(_chal, "");
+        auditingReqTable[_hash] = req;
+        chalBuffer.push(_hash);
     }
 
     function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {
@@ -146,33 +145,21 @@ contract XZ21 {
     }
 
     function SetProof(bytes32 _hash, bytes calldata _proof) public {
-        bool found = false;
-        uint found_index = 0;
-        for (uint i = 0; i < chalBuffer.length; i++) {
-            if (_hash == chalBuffer[i]) {
-                found = true;
-                found_index = i;
-                break;
-            }
-        }
-
-        require(found, "Unknown hash value");
+        require(auditingReqTable[_hash].chal.length > 0);
+        require(auditingReqTable[_hash].proof.length == 0);
 
         auditingReqTable[_hash].proof = _proof;
-        auditingReqList.push(_hash);
+        proofBuffer.push(_hash);
 
-        for (uint i = found_index; i < chalBuffer.length - 1; i++) {
-            chalBuffer[i] = chalBuffer[i+1];
-        }
-        chalBuffer.pop();
+        deleteChalBuffer(_hash);
     }
 
     function GetAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
-        uint num = auditingReqList.length;
+        uint num = proofBuffer.length;
         bytes32[] memory fileList = new bytes32[](num);
         AuditingReq[] memory reqList = new AuditingReq[](num);
         for (uint i = 0; i < num; i++) {
-            bytes32 h = auditingReqList[i];
+            bytes32 h = proofBuffer[i];
             fileList[i] = h;
             reqList[i] = auditingReqTable[h];
         }
@@ -180,17 +167,8 @@ contract XZ21 {
     }
 
     function SetAuditingResult(bytes32 _hash, bool _result) public {
-        bool found = false;
-        uint found_index = 0;
-        for (uint i = 0; i < auditingReqList.length; i++) {
-            if (_hash == auditingReqList[i]) {
-                found = true;
-                found_index = i;
-                break;
-            }
-        }
-
-        require(found, "Unknown hash value");
+        require(auditingReqTable[_hash].chal.length > 0);
+        require(auditingReqTable[_hash].proof.length > 0);
 
         AuditingLog memory log = AuditingLog(
             auditingReqTable[_hash].chal,
@@ -200,17 +178,47 @@ contract XZ21 {
         auditingLogTable[_hash].push(log);
 
         // Remove AuditingReq from the map
-        auditingReqTable[_hash].chal = "";
-        auditingReqTable[_hash].proof = "";
+        auditingReqTable[_hash] = AuditingReq("", "");
 
         // Remove hash from the list
-        for (uint i = found_index; i < auditingReqList.length - 1; i++) {
-            auditingReqList[i] = auditingReqList[i+1];
-        }
-        auditingReqList.pop();
+        deleteProofBuffer(_hash);
+
+        emit EventSetAuditingResult(_hash, _result);
     }
 
     function GetAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
         return auditingLogTable[_hash];
+    }
+
+    function deleteChalBuffer(bytes32 _hash) private {
+        bool found = false;
+        uint found_index = 0;
+        for (uint i = 0; i < chalBuffer.length; i++) {
+            if (_hash == chalBuffer[i]) {
+                found = true;
+                found_index = i;
+                break;
+            }
+        }
+        for (uint i = found_index; i < chalBuffer.length - 1; i++) {
+            chalBuffer[i] = chalBuffer[i+1];
+        }
+        chalBuffer.pop();
+    }
+
+    function deleteProofBuffer(bytes32 _hash) private {
+        bool found = false;
+        uint found_index = 0;
+        for (uint i = 0; i < proofBuffer.length; i++) {
+            if (_hash == proofBuffer[i]) {
+                found = true;
+                found_index = i;
+                break;
+            }
+        }
+        for (uint i = found_index; i < proofBuffer.length - 1; i++) {
+            proofBuffer[i] = proofBuffer[i+1];
+        }
+        proofBuffer.pop();
     }
 }
