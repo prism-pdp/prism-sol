@@ -120,13 +120,13 @@ contract XZ21Test is Test {
 
         // SP downloads the list of chal.
         vm.prank(ADDR_SP);
-        (bytes32[] memory fileList, bytes[] memory chalList) = c.GetChalList();
+        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList1) = c.GetAuditingReqList();
         assertEq(fileList[0], HASH_FILE1);
-        assertEq(chalList[0], chal1);
+        assertEq(reqList1[0].chal, chal1);
         assertEq(fileList[1], HASH_FILE2);
-        assertEq(chalList[1], chal2);
+        assertEq(reqList1[1].chal, chal2);
         assertEq(fileList.length, 2);
-        assertEq(chalList.length, 2);
+        assertEq(reqList1.length, 2);
 
         // SP uploads the proof for each chal.
         vm.prank(ADDR_SP);
@@ -136,13 +136,13 @@ contract XZ21Test is Test {
 
         // TPA downloads the list of auditing reqs (chal and proof).
         vm.prank(ADDR_TPA);
-        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
+        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList2) = c.GetAuditingReqList();
         assertEq(fileList2[0], HASH_FILE1);
-        assertEq(reqList[0].chal, chal1);
-        assertEq(reqList[0].proof, proof1);
+        assertEq(reqList2[0].chal, chal1);
+        assertEq(reqList2[0].proof, proof1);
         assertEq(fileList2[1], HASH_FILE2);
-        assertEq(reqList[1].chal, chal2);
-        assertEq(reqList[1].proof, proof2);
+        assertEq(reqList2[1].chal, chal2);
+        assertEq(reqList2[1].proof, proof2);
 
         // TPA uploads the auditing result.
         vm.prank(ADDR_TPA);
@@ -168,14 +168,9 @@ contract XZ21Test is Test {
 
         // blank chal list
         vm.prank(ADDR_SP);
-        (bytes32[] memory fileList1_After, bytes[] memory chalList1_After) = c.GetChalList();
-        assertEq(fileList1_After.length, 0);
-        assertEq(chalList1_After.length, 0);
-
-        vm.prank(ADDR_TPA);
-        (bytes32[] memory fileList2_After, XZ21.AuditingReq[] memory reqList2_After) = c.GetAuditingReqList();
-        assertEq(fileList2_After.length, 0);
-        assertEq(reqList2_After.length, 0);
+        (bytes32[] memory fileListAfter, XZ21.AuditingReq[] memory reqListAfter) = c.GetAuditingReqList();
+        assertEq(fileListAfter.length, 0);
+        assertEq(reqListAfter.length, 0);
     }
 
     // function testPara() public view {

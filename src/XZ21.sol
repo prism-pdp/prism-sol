@@ -15,8 +15,7 @@ contract XZ21 {
     mapping(bytes32 => AuditingReq) private auditingReqTable;
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
-    bytes32[] chalBuffer;
-    bytes32[] proofBuffer;
+    bytes32[] reqBuffer;
 
     struct Param {
         string P;
@@ -127,21 +126,8 @@ contract XZ21 {
     function SetChal(bytes32 _hash, bytes calldata _chal) public {
         require(auditingReqTable[_hash].chal.length == 0, "chal is already set.");
 
-        AuditingReq memory req = AuditingReq(_chal, "");
-        auditingReqTable[_hash] = req;
-        chalBuffer.push(_hash);
-    }
-
-    function GetChalList() public view returns(bytes32[] memory, bytes[] memory) {
-        uint num = chalBuffer.length;
-        bytes32[] memory fileList = new bytes32[](num);
-        bytes[] memory chalList = new bytes[](num);
-        for (uint i = 0; i < num; i++) {
-            bytes32 h = chalBuffer[i];
-            fileList[i] = h;
-            chalList[i] = auditingReqTable[h].chal;
-        }
-        return (fileList, chalList);
+        auditingReqTable[_hash].chal = _chal;
+        reqBuffer.push(_hash);
     }
 
     function SetProof(bytes32 _hash, bytes calldata _proof) public {
@@ -149,17 +135,14 @@ contract XZ21 {
         require(auditingReqTable[_hash].proof.length == 0);
 
         auditingReqTable[_hash].proof = _proof;
-        proofBuffer.push(_hash);
-
-        deleteChalBuffer(_hash);
     }
 
     function GetAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
-        uint num = proofBuffer.length;
+        uint num = reqBuffer.length;
         bytes32[] memory fileList = new bytes32[](num);
         AuditingReq[] memory reqList = new AuditingReq[](num);
         for (uint i = 0; i < num; i++) {
-            bytes32 h = proofBuffer[i];
+            bytes32 h = reqBuffer[i];
             fileList[i] = h;
             reqList[i] = auditingReqTable[h];
         }
@@ -181,7 +164,7 @@ contract XZ21 {
         auditingReqTable[_hash] = AuditingReq("", "");
 
         // Remove hash from the list
-        deleteProofBuffer(_hash);
+        deleteReqBuffer(_hash);
 
         emit EventSetAuditingResult(_hash, _result);
     }
@@ -190,35 +173,19 @@ contract XZ21 {
         return auditingLogTable[_hash];
     }
 
-    function deleteChalBuffer(bytes32 _hash) private {
+    function deleteReqBuffer(bytes32 _hash) private {
         bool found = false;
         uint found_index = 0;
-        for (uint i = 0; i < chalBuffer.length; i++) {
-            if (_hash == chalBuffer[i]) {
+        for (uint i = 0; i < reqBuffer.length; i++) {
+            if (_hash == reqBuffer[i]) {
                 found = true;
                 found_index = i;
                 break;
             }
         }
-        for (uint i = found_index; i < chalBuffer.length - 1; i++) {
-            chalBuffer[i] = chalBuffer[i+1];
+        for (uint i = found_index; i < reqBuffer.length - 1; i++) {
+            reqBuffer[i] = reqBuffer[i+1];
         }
-        chalBuffer.pop();
-    }
-
-    function deleteProofBuffer(bytes32 _hash) private {
-        bool found = false;
-        uint found_index = 0;
-        for (uint i = 0; i < proofBuffer.length; i++) {
-            if (_hash == proofBuffer[i]) {
-                found = true;
-                found_index = i;
-                break;
-            }
-        }
-        for (uint i = found_index; i < proofBuffer.length - 1; i++) {
-            proofBuffer[i] = proofBuffer[i+1];
-        }
-        proofBuffer.pop();
+        reqBuffer.pop();
     }
 }
