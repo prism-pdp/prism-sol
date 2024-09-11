@@ -62,10 +62,6 @@ contract XZ21 {
         addrTPA = _addrTPA;
     }
 
-    function ReadFile(bytes32 _hash) public view returns(FileProperty memory) {
-        return fileIndexTable[_hash];
-    }
-
     function RegisterParam(
         string memory _p,
         bytes memory _g,
