@@ -6,8 +6,8 @@ import "forge-std/console.sol";
 contract XZ21 {
     Param param;
 
-    address public addrSM;
-    address public addrSP;
+    address public immutable addrSM;
+    address public immutable addrSP;
     address public addrTPA;
 
     mapping(address => Account) private accountIndexTable;
@@ -39,9 +39,9 @@ contract XZ21 {
     }
 
     struct AuditingLog {
-        bytes chal;
-        bytes proof;
+        AuditingReq req;
         bool result;
+        uint256 date;
     }
 
     event EventSetAuditingResult(bytes32 _hash, bool _result);
@@ -146,13 +146,18 @@ contract XZ21 {
     }
 
     function SetAuditingResult(bytes32 _hash, bool _result) public {
-        require(auditingReqTable[_hash].chal.length > 0);
-        require(auditingReqTable[_hash].proof.length > 0);
+        require(auditingReqTable[_hash].chal.length > 0, "missing chal");
+        require(auditingReqTable[_hash].proof.length > 0, "missing proof");
+
+        if (auditingLogTable[_hash].length > 0) {
+            uint tail = auditingLogTable[_hash].length - 1;
+            require(auditingLogTable[_hash][tail].date < block.timestamp, "timestamp error");
+        }
 
         AuditingLog memory log = AuditingLog(
-            auditingReqTable[_hash].chal,
-            auditingReqTable[_hash].proof,
-            _result
+            auditingReqTable[_hash],
+            _result,
+            block.timestamp
         );
         auditingLogTable[_hash].push(log);
 
