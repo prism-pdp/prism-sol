@@ -103,93 +103,87 @@ contract XZ21Test is Test {
     function testAuditing() public {
         bytes memory chal1 = "chal1";
         bytes memory chal2 = "chal2";
-        bytes memory proof1 = "proof1";
-        bytes memory proof2 = "proof2";
+        uint256 date0 = 1727740800;        // 2024-10-01 00:00:00
+        uint256 date1 = date0 + 1 minutes; // 2024-10-01 00:01:00
 
         // USER1 reqests audiging of FILE1 and FILE2.
-        vm.prank(ADDR_USER1);
-        c.SetChal(HASH_FILE1, chal1);
+        reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
+        reqAuditing(ADDR_USER1, HASH_FILE2, chal2);
 
-        vm.prank(ADDR_USER1);
-        c.SetChal(HASH_FILE2, chal2);
-
-        // USER1 reqests audiging of FILE2 (duplication).
-        vm.prank(ADDR_USER1);
+        // !!! Error case !!!
+        // USER1 makes an auditing request for FILE1 that has already been requested for auditing.
         vm.expectRevert(bytes("chal is already set."));
-        c.SetChal(HASH_FILE2, chal2);
+        reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
 
-        // SP downloads the list of chal.
-        vm.prank(ADDR_SP);
-        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList1) = c.GetAuditingReqList();
-        assertEq(fileList[0], HASH_FILE1);
-        assertEq(reqList1[0].chal, chal1);
-        assertEq(fileList[1], HASH_FILE2);
-        assertEq(reqList1[1].chal, chal2);
-        assertEq(fileList.length, 2);
-        assertEq(reqList1.length, 2);
+        // SP makes proofs.
+        makeProof();
 
-        // SP uploads the proof for each chal.
-        vm.prank(ADDR_SP);
-        c.SetProof(fileList[0], proof1);
-        vm.prank(ADDR_SP);
-        c.SetProof(fileList[1], proof2);
-
-        // TPA downloads the list of auditing reqs (chal and proof).
-        vm.prank(ADDR_TPA);
-        (bytes32[] memory fileList2, XZ21.AuditingReq[] memory reqList2) = c.GetAuditingReqList();
-        assertEq(fileList2[0], HASH_FILE1);
-        assertEq(reqList2[0].chal, chal1);
-        assertEq(reqList2[0].proof, proof1);
-        assertEq(fileList2[1], HASH_FILE2);
-        assertEq(reqList2[1].chal, chal2);
-        assertEq(reqList2[1].proof, proof2);
-
-        // TPA uploads the auditing result.
-        vm.prank(ADDR_TPA);
-        vm.expectEmit(false, false, false, true);
-        emit XZ21.EventSetAuditingResult(fileList2[0], false);
-        c.SetAuditingResult(fileList2[0], false);
-        vm.prank(ADDR_TPA);
-        vm.expectEmit(false, false, false, true);
-        emit XZ21.EventSetAuditingResult(fileList2[1], true);
-        c.SetAuditingResult(fileList2[1], true);
+        // TPA verifies proofs.
+        verifyProof(true, date1);
 
         // USER1 checks the auditing result.
-        vm.prank(ADDR_USER1);
-        XZ21.AuditingLog[] memory logs = c.GetAuditingLogs(HASH_FILE1);
-        assertEq(logs.length, 1);
-        assertEq(logs[0].chal, chal1);
-        assertEq(logs[0].proof, proof1);
-        assertEq(logs[0].result, false);
+        checkLog(ADDR_USER1, HASH_FILE1, 0, chal1, "proof", true, date1);
+        checkLog(ADDR_USER1, HASH_FILE2, 0, chal2, "proof", true, date1);
 
-        // =============================
-        // check status after auditing
-        // =============================
+        // Check if the request is empty
+        checkBlank();
 
-        // blank chal list
-        vm.prank(ADDR_SP);
-        (bytes32[] memory fileListAfter, XZ21.AuditingReq[] memory reqListAfter) = c.GetAuditingReqList();
-        assertEq(fileListAfter.length, 0);
-        assertEq(reqListAfter.length, 0);
+        // !!! Error case !!!
+        // Request auditing for FILE1 again, and register the log with a timestamp earlier than the previous result.
+        reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
+        makeProof();
+        vm.prank(ADDR_TPA);
+        vm.warp(date0);
+        vm.expectRevert(bytes("timestamp error"));
+        c.SetAuditingResult(HASH_FILE1, false);
     }
 
-    // function testPara() public view {
-    //     XZ21.Para memory para = c.GetPara();
-    //     assertEq(para.PARAM, PARAM);
-    //     assertEq(para.G, G);
-    //     assertEq(para.U, U);
-    // }
+    function reqAuditing(address _user, bytes32 _hash, bytes memory _chal) private {
+        // A user reqests audiging of a file.
+        vm.prank(_user);
+        c.SetChal(_hash, _chal);
+    }
 
-    // function testFile() public view {
-    //     bool ret;
+    function makeProof() private {
+        // SP downloads the list of chal.
+        vm.prank(ADDR_SP);
+        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
 
-    //     ret = c.SearchFile(HASH_FILE0);
-    //     assertFalse(ret);
+        // SP uploads a proof for the chal.
+        for (uint i = 0; i < reqList.length; i++) {
+            vm.prank(ADDR_SP);
+            c.SetProof(fileList[i], "proof");
+        }
+    }
 
-    //     ret = c.SearchFile(HASH_FILE1);
-    //     assertTrue(ret);
+    function verifyProof(bool _result, uint256 _date) private {
+        // TPA downloads the list of auditing reqs (chal and proof).
+        vm.prank(ADDR_TPA);
+        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
 
-    //     ret = c.SearchFile(HASH_FILE2);
-    //     assertTrue(ret);
-    // }
+        // TPA uploads the auditing result.
+        for (uint i = 0; i < reqList.length; i++) {
+            vm.prank(ADDR_TPA);
+            vm.warp(_date);
+            vm.expectEmit(false, false, false, true);
+            emit XZ21.EventSetAuditingResult(fileList[i], _result);
+            c.SetAuditingResult(fileList[i], _result);
+        }
+    }
+
+    function checkLog(address _user, bytes32 _hash, uint _index, bytes memory _chal, bytes memory _proof, bool _result, uint256 _date) private {
+        vm.prank(_user);
+        XZ21.AuditingLog[] memory logs = c.GetAuditingLogs(_hash);
+        assertEq(logs[_index].req.chal, _chal);
+        assertEq(logs[_index].req.proof, _proof);
+        assertEq(logs[_index].result, _result);
+        assertEq(logs[_index].date, _date);
+    }
+
+    function checkBlank() private {
+        vm.prank(ADDR_TPA);
+        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
+        assertEq(fileList.length, 0);
+        assertEq(reqList.length, 0);
+    }
 }
