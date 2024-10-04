@@ -103,6 +103,8 @@ contract XZ21Test is Test {
     function testAuditing() public {
         bytes memory chal1 = "chal1";
         bytes memory chal2 = "chal2";
+        bytes memory proof1 = "proof1";
+        bytes memory proof2 = "proof2";
         uint256 date0 = 1727740800;        // 2024-10-01 00:00:00
         uint256 date1 = date0 + 1 minutes; // 2024-10-01 00:01:00
 
@@ -112,18 +114,32 @@ contract XZ21Test is Test {
 
         // !!! Error case !!!
         // USER1 makes an auditing request for FILE1 that has already been requested for auditing.
-        vm.expectRevert(bytes("chal is already set."));
+        vm.expectRevert(bytes("Not WaitingChal"));
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
 
         // SP makes proofs.
-        makeProof();
+        makeProof(HASH_FILE1, proof1);
+        makeProof(HASH_FILE2, proof2);
+
+        // !!! Error case !!!
+        // SP creates again a proof for a request that has already been processed.
+        vm.expectRevert(bytes("Not WaitingProof"));
+        makeProof(HASH_FILE1, proof1);
 
         // TPA verifies proofs.
-        verifyProof(true, date1);
+        vm.expectEmit(false, false, false, true); emit XZ21.EventSetAuditingResult(HASH_FILE1, true); // Event log
+        verifyProof(HASH_FILE1, true, date1);
+        vm.expectEmit(false, false, false, true); emit XZ21.EventSetAuditingResult(HASH_FILE2, true); // Event log
+        verifyProof(HASH_FILE2, true, date1);
+
+        // !!! Error case !!!
+        // TPA creates again a result for a request that has already been processed
+        vm.expectRevert(bytes("Not WaitingResult"));
+        verifyProof(HASH_FILE1, true, date1);
 
         // USER1 checks the auditing result.
-        checkLog(ADDR_USER1, HASH_FILE1, 0, chal1, "proof", true, date1);
-        checkLog(ADDR_USER1, HASH_FILE2, 0, chal2, "proof", true, date1);
+        checkLog(ADDR_USER1, HASH_FILE1, 0, chal1, proof1, true, date1);
+        checkLog(ADDR_USER1, HASH_FILE2, 0, chal2, proof2, true, date1);
 
         // Check if the request is empty
         checkBlank();
@@ -131,7 +147,7 @@ contract XZ21Test is Test {
         // !!! Error case !!!
         // Request auditing for FILE1 again, and register the log with a timestamp earlier than the previous result.
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
-        makeProof();
+        makeProof(HASH_FILE1, proof1);
         vm.prank(ADDR_TPA);
         vm.warp(date0);
         vm.expectRevert(bytes("timestamp error"));
@@ -144,31 +160,15 @@ contract XZ21Test is Test {
         c.SetChal(_hash, _chal);
     }
 
-    function makeProof() private {
-        // SP downloads the list of chal.
+    function makeProof(bytes32 _hash, bytes memory _proof) private {
         vm.prank(ADDR_SP);
-        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
-
-        // SP uploads a proof for the chal.
-        for (uint i = 0; i < reqList.length; i++) {
-            vm.prank(ADDR_SP);
-            c.SetProof(fileList[i], "proof");
-        }
+        c.SetProof(_hash, _proof);
     }
 
-    function verifyProof(bool _result, uint256 _date) private {
-        // TPA downloads the list of auditing reqs (chal and proof).
+    function verifyProof(bytes32 _hash, bool _result, uint256 _date) private {
         vm.prank(ADDR_TPA);
-        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
-
-        // TPA uploads the auditing result.
-        for (uint i = 0; i < reqList.length; i++) {
-            vm.prank(ADDR_TPA);
-            vm.warp(_date);
-            vm.expectEmit(false, false, false, true);
-            emit XZ21.EventSetAuditingResult(fileList[i], _result);
-            c.SetAuditingResult(fileList[i], _result);
-        }
+        vm.warp(_date);
+        c.SetAuditingResult(_hash, _result);
     }
 
     function checkLog(address _user, bytes32 _hash, uint _index, bytes memory _chal, bytes memory _proof, bool _result, uint256 _date) private {

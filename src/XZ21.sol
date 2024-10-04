@@ -17,6 +17,12 @@ contract XZ21 {
 
     bytes32[] reqBuffer;
 
+    enum Stages {
+        WaitingChal,
+        WaitingProof,
+        WaitingResult
+    }
+
     struct Param {
         string P;
         bytes U;
@@ -36,6 +42,7 @@ contract XZ21 {
     struct AuditingReq {
         bytes chal;
         bytes proof;
+        Stages stage;
     }
 
     struct AuditingLog {
@@ -120,17 +127,20 @@ contract XZ21 {
     }
 
     function SetChal(bytes32 _hash, bytes calldata _chal) public {
-        require(auditingReqTable[_hash].chal.length == 0, "chal is already set.");
+        require(auditingReqTable[_hash].stage == Stages.WaitingChal, "Not WaitingChal");
 
         auditingReqTable[_hash].chal = _chal;
         reqBuffer.push(_hash);
+
+        auditingReqTable[_hash].stage = Stages.WaitingProof;
     }
 
     function SetProof(bytes32 _hash, bytes calldata _proof) public {
-        require(auditingReqTable[_hash].chal.length > 0);
-        require(auditingReqTable[_hash].proof.length == 0);
+        require(auditingReqTable[_hash].stage == Stages.WaitingProof, "Not WaitingProof");
 
         auditingReqTable[_hash].proof = _proof;
+
+        auditingReqTable[_hash].stage = Stages.WaitingResult;
     }
 
     function GetAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
@@ -146,8 +156,7 @@ contract XZ21 {
     }
 
     function SetAuditingResult(bytes32 _hash, bool _result) public {
-        require(auditingReqTable[_hash].chal.length > 0, "missing chal");
-        require(auditingReqTable[_hash].proof.length > 0, "missing proof");
+        require(auditingReqTable[_hash].stage == Stages.WaitingResult, "Not WaitingResult");
 
         if (auditingLogTable[_hash].length > 0) {
             uint tail = auditingLogTable[_hash].length - 1;
@@ -162,7 +171,7 @@ contract XZ21 {
         auditingLogTable[_hash].push(log);
 
         // Remove AuditingReq from the map
-        auditingReqTable[_hash] = AuditingReq("", "");
+        auditingReqTable[_hash] = AuditingReq("", "", Stages.WaitingChal);
 
         // Remove hash from the list
         deleteReqBuffer(_hash);
