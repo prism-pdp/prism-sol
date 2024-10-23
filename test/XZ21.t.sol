@@ -35,23 +35,26 @@ contract XZ21Test is Test {
         ADDR_USER3 = vm.addr(2003);
 
         vm.prank(ADDR_SM);
-        c = new XZ21(ADDR_SP, ADDR_TPA);
+        c = new XZ21(ADDR_SP);
         vm.prank(ADDR_SM);
         c.RegisterParam(P, G, U);
         vm.prank(ADDR_SM);
-        c.EnrollAccount(ADDR_USER1, KEY_USER1);
+        c.EnrollAccount(0, ADDR_TPA, "");
         vm.prank(ADDR_SM);
-        c.EnrollAccount(ADDR_USER2, KEY_USER2);
+        c.EnrollAccount(1, ADDR_USER1, KEY_USER1);
         vm.prank(ADDR_SM);
-        c.EnrollAccount(ADDR_USER3, KEY_USER3);
+        c.EnrollAccount(1, ADDR_USER2, KEY_USER2);
+        vm.prank(ADDR_SM);
+        c.EnrollAccount(1, ADDR_USER3, KEY_USER3);
     }
 
     function testSetupPhase() public view {
         address addrSM = c.addrSM();
         assertEq(addrSM, ADDR_SM);
 
-        address addrTPA = c.addrTPA();
-        assertEq(addrTPA, ADDR_TPA);
+        address[] memory addrListTPA = c.GetAddrListTPA();
+        assertEq(addrListTPA.length, 1);
+        assertEq(addrListTPA[0], ADDR_TPA);
 
         address addrSP = c.addrSP();
         assertEq(addrSP, ADDR_SP);

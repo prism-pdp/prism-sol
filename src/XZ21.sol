@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identofier: UNLICENSED
 pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
@@ -8,7 +8,7 @@ contract XZ21 {
 
     address public immutable addrSM;
     address public immutable addrSP;
-    address public addrTPA;
+    address[] public addrListTPA;
 
     mapping(address => Account) private accountIndexTable;
     mapping(bytes32 => FileProperty) private fileIndexTable;
@@ -60,13 +60,11 @@ contract XZ21 {
     }
 
     constructor(
-        address _addrSP,
-        address _addrTPA
+        address _addrSP
     )
     {
         addrSM = msg.sender;
         addrSP = _addrSP;
-        addrTPA = _addrTPA;
     }
 
     function RegisterParam(
@@ -81,18 +79,32 @@ contract XZ21 {
     }
 
     function EnrollAccount(
+        int _type,
         address _addr,
         bytes calldata _pubKey
-    ) public onlyBy(addrSM)
+    ) public onlyBy(addrSM) returns(bool)
     {
-        console.log("Enroll SU account (Address:%s)", _addr);
-        accountIndexTable[_addr] = Account(_pubKey, new bytes32[](0));
+        if (_type == 0) {
+            console.log("Enroll TPA account (Address:%s)", _addr);
+            addrListTPA.push(_addr); // TODO: Implement deduplication
+        } else if (_type == 1) {
+            console.log("Enroll SU account (Address:%s)", _addr);
+            accountIndexTable[_addr] = Account(_pubKey, new bytes32[](0));
+        } else {
+            // console.log("Unknown type (type:%d)", _type);
+            return false;
+        }
+        return true;
     }
 
     function GetAccount(
         address _addr
     ) public view returns(Account memory) {
         return accountIndexTable[_addr];
+    }
+
+    function GetAddrListTPA() public view returns(address[] memory) {
+        return addrListTPA;
     }
 
     function GetParam() public view returns(Param memory) {
