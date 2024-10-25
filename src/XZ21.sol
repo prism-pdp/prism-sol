@@ -8,9 +8,9 @@ contract XZ21 {
 
     address public immutable addrSM;
     address public immutable addrSP;
-    address[] public addrListTPA;
+    address[] public auditorAddrList;
 
-    mapping(address => Account) private accountIndexTable;
+    mapping(address => Account) private userAccountTable;
     mapping(bytes32 => FileProperty) private fileIndexTable;
     mapping(bytes32 => AuditingReq) private auditingReqTable;
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
@@ -86,10 +86,10 @@ contract XZ21 {
     {
         if (_type == 0) {
             console.log("Enroll TPA account (Address:%s)", _addr);
-            addrListTPA.push(_addr); // TODO: Implement deduplication
+            auditorAddrList.push(_addr); // TODO: Implement deduplication
         } else if (_type == 1) {
             console.log("Enroll SU account (Address:%s)", _addr);
-            accountIndexTable[_addr] = Account(_pubKey, new bytes32[](0));
+            userAccountTable[_addr] = Account(_pubKey, new bytes32[](0));
         } else {
             // console.log("Unknown type (type:%d)", _type);
             return false;
@@ -97,14 +97,14 @@ contract XZ21 {
         return true;
     }
 
-    function GetAccount(
+    function GetUserAccount(
         address _addr
     ) public view returns(Account memory) {
-        return accountIndexTable[_addr];
+        return userAccountTable[_addr];
     }
 
-    function GetAddrListTPA() public view returns(address[] memory) {
-        return addrListTPA;
+    function GetAuditorAddrList() public view returns(address[] memory) {
+        return auditorAddrList;
     }
 
     function GetParam() public view returns(Param memory) {
@@ -116,7 +116,7 @@ contract XZ21 {
 
         fileIndexTable[_hash].splitNum = _splitNum;
         fileIndexTable[_hash].creator = _owner;
-        accountIndexTable[_owner].fileList.push(_hash);
+        userAccountTable[_owner].fileList.push(_hash);
     }
 
     function SearchFile(bytes32 _hash) public view returns(FileProperty memory) {
@@ -124,10 +124,10 @@ contract XZ21 {
     }
 
     function GetFileList(address _owner) public view returns(bytes32[] memory) {
-        uint fileListLength = accountIndexTable[_owner].fileList.length;
+        uint fileListLength = userAccountTable[_owner].fileList.length;
         bytes32[] memory fileList = new bytes32[](fileListLength);
-        for(uint i = 0; i < accountIndexTable[_owner].fileList.length; i++) {
-            fileList[i] = accountIndexTable[_owner].fileList[i];
+        for(uint i = 0; i < userAccountTable[_owner].fileList.length; i++) {
+            fileList[i] = userAccountTable[_owner].fileList[i];
         }
         return fileList;
     }
@@ -135,7 +135,7 @@ contract XZ21 {
     function AppendOwner(bytes32 _hash, address _owner) public {
         require(fileIndexTable[_hash].splitNum > 0, "invalid file");
 
-        accountIndexTable[_owner].fileList.push(_hash);
+        userAccountTable[_owner].fileList.push(_hash);
     }
 
     function SetChal(bytes32 _hash, bytes calldata _chal) public {

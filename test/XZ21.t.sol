@@ -52,7 +52,7 @@ contract XZ21Test is Test {
         address addrSM = c.addrSM();
         assertEq(addrSM, ADDR_SM);
 
-        address[] memory addrListTPA = c.GetAddrListTPA();
+        address[] memory addrListTPA = c.GetAuditorAddrList();
         assertEq(addrListTPA.length, 1);
         assertEq(addrListTPA[0], ADDR_TPA);
 
@@ -64,16 +64,16 @@ contract XZ21Test is Test {
         assertEq(param.G, G);
         assertEq(param.U, U);
 
-        XZ21.Account memory su1 = c.GetAccount(ADDR_USER1);
+        XZ21.Account memory su1 = c.GetUserAccount(ADDR_USER1);
         assertEq(su1.pubKey, KEY_USER1);
 
-        XZ21.Account memory su2 = c.GetAccount(ADDR_USER2);
+        XZ21.Account memory su2 = c.GetUserAccount(ADDR_USER2);
         assertEq(su2.pubKey, KEY_USER2);
 
-        XZ21.Account memory su3 = c.GetAccount(ADDR_USER3);
+        XZ21.Account memory su3 = c.GetUserAccount(ADDR_USER3);
         assertEq(su3.pubKey, KEY_USER3);
 
-        XZ21.Account memory su0 = c.GetAccount(ADDR_USER0);
+        XZ21.Account memory su0 = c.GetUserAccount(ADDR_USER0);
         assertEq(su0.pubKey, "");
     }
 
