@@ -73,7 +73,7 @@ contract XZ21 {
         string memory _p,
         bytes memory _g,
         bytes memory _u
-    ) public
+    ) onlyBy(addrSM) public
     {
         require(doneRegisterParam == false, "Do not overwrite RegisterParam");
         param.P = _p;
