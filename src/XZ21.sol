@@ -88,16 +88,25 @@ contract XZ21 {
         bytes calldata _pubKey
     ) public onlyBy(addrSM) returns(bool)
     {
+        require(_type == 0 || _type == 1, "Invalid type");
+
         if (_type == 0) {
+            bool found = false;
+            for (uint i = 0; i < auditorAddrList.length; i++) {
+                if (auditorAddrList[i] == _addr) {
+                    found = true;
+                    break;
+                }
+            }
+            require(found == false, "Duplicate TPA address");
             console.log("Enroll TPA account (Address:%s)", _addr);
-            auditorAddrList.push(_addr); // TODO: Implement deduplication
-        } else if (_type == 1) {
+            auditorAddrList.push(_addr);
+        } else {
+            require(userAccountTable[_addr].pubKey.length == 0, "Duplicate SU account");
             console.log("Enroll SU account (Address:%s)", _addr);
             userAccountTable[_addr] = Account(_pubKey, new bytes32[](0));
-        } else {
-            // console.log("Unknown type (type:%d)", _type);
-            return false;
         }
+
         return true;
     }
 

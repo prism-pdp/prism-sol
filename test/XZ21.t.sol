@@ -42,12 +42,21 @@ contract XZ21Test is Test {
         vm.expectRevert(bytes("Do not overwrite RegisterParam"));
         c.RegisterParam(P, G, U);
         vm.prank(ADDR_SM);
+        vm.expectRevert(bytes("Invalid type"));
+        c.EnrollAccount(9, ADDR_TPA, "");
+        vm.prank(ADDR_SM);
+        c.EnrollAccount(0, ADDR_TPA, "");
+        vm.prank(ADDR_SM);
+        vm.expectRevert(bytes("Duplicate TPA address"));
         c.EnrollAccount(0, ADDR_TPA, "");
         vm.prank(ADDR_SM);
         c.EnrollAccount(1, ADDR_USER1, KEY_USER1);
         vm.prank(ADDR_SM);
         c.EnrollAccount(1, ADDR_USER2, KEY_USER2);
         vm.prank(ADDR_SM);
+        c.EnrollAccount(1, ADDR_USER3, KEY_USER3);
+        vm.prank(ADDR_SM);
+        vm.expectRevert(bytes("Duplicate SU account"));
         c.EnrollAccount(1, ADDR_USER3, KEY_USER3);
     }
 
