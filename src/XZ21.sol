@@ -56,7 +56,7 @@ contract XZ21 {
 
     modifier onlyBy(address _addr)
     {
-        require(msg.sender == _addr);
+        require(msg.sender == _addr, "Authentication error");
         _;
     }
 
@@ -124,7 +124,11 @@ contract XZ21 {
         return param;
     }
 
-    function RegisterFile(bytes32 _hash, uint32 _splitNum, address _owner) public {
+    function RegisterFile(
+        bytes32 _hash,
+        uint32 _splitNum,
+        address _owner
+    ) public onlyBy(addrSP) {
         require(_splitNum > 0, "invalid split num");
 
         fileIndexTable[_hash].splitNum = _splitNum;
@@ -145,7 +149,10 @@ contract XZ21 {
         return fileList;
     }
 
-    function AppendOwner(bytes32 _hash, address _owner) public {
+    function AppendOwner(
+        bytes32 _hash,
+        address _owner
+    ) public onlyBy(addrSP) {
         require(fileIndexTable[_hash].splitNum > 0, "invalid file");
 
         userAccountTable[_owner].fileList.push(_hash);

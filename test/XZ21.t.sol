@@ -95,10 +95,15 @@ contract XZ21Test is Test {
         assertEq(address(0), fileProp.creator);
         assertEq(0, fileProp.splitNum);
 
-        vm.prank(ADDR_SP);
-        c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
-        c.RegisterFile(HASH_FILE2, 20, ADDR_USER1);
-        c.AppendOwner(HASH_FILE2, ADDR_USER2);
+        vm.expectRevert(bytes("Authentication error"));
+        vm.prank(ADDR_USER1); c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
+
+        vm.expectRevert(bytes("Authentication error"));
+        vm.prank(ADDR_USER1); c.AppendOwner(HASH_FILE2, ADDR_USER2);
+
+        vm.prank(ADDR_SP); c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
+        vm.prank(ADDR_SP); c.RegisterFile(HASH_FILE2, 20, ADDR_USER1);
+        vm.prank(ADDR_SP); c.AppendOwner(HASH_FILE2, ADDR_USER2);
 
         vm.prank(ADDR_SP);
         fileProp = c.SearchFile(HASH_FILE1);
