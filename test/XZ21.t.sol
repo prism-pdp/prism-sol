@@ -39,6 +39,9 @@ contract XZ21Test is Test {
         vm.prank(ADDR_SM);
         c.RegisterParam(P, G, U);
         vm.prank(ADDR_SM);
+        vm.expectRevert(bytes("Do not overwrite RegisterParam"));
+        c.RegisterParam(P, G, U);
+        vm.prank(ADDR_SM);
         c.EnrollAccount(0, ADDR_TPA, "");
         vm.prank(ADDR_SM);
         c.EnrollAccount(1, ADDR_USER1, KEY_USER1);

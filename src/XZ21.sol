@@ -5,6 +5,7 @@ import "forge-std/console.sol";
 
 contract XZ21 {
     Param param;
+    bool doneRegisterParam;
 
     address public immutable addrSM;
     address public immutable addrSP;
@@ -65,6 +66,7 @@ contract XZ21 {
     {
         addrSM = msg.sender;
         addrSP = _addrSP;
+        doneRegisterParam = false;
     }
 
     function RegisterParam(
@@ -73,9 +75,11 @@ contract XZ21 {
         bytes memory _u
     ) public
     {
+        require(doneRegisterParam == false, "Do not overwrite RegisterParam");
         param.P = _p;
         param.U = _u;
         param.G = _g;
+        doneRegisterParam = true;
     }
 
     function EnrollAccount(
