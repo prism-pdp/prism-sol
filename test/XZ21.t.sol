@@ -128,6 +128,10 @@ contract XZ21Test is Test {
         uint256 date0 = 1727740800;        // 2024-10-01 00:00:00
         uint256 date1 = date0 + 1 minutes; // 2024-10-01 00:01:00
 
+        vm.prank(ADDR_SP);
+        vm.expectRevert(bytes("SU authentication error"));
+        c.SetChal(HASH_FILE1, chal1);
+
         // USER1 reqests audiging of FILE1 and FILE2.
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
         reqAuditing(ADDR_USER1, HASH_FILE2, chal2);
@@ -137,6 +141,11 @@ contract XZ21Test is Test {
         vm.expectRevert(bytes("Not WaitingChal"));
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
 
+        // !!! Error case !!!
+        vm.prank(ADDR_USER1);
+        vm.expectRevert("Authentication error");
+        c.SetProof(HASH_FILE1, proof1);
+
         // SP makes proofs.
         makeProof(HASH_FILE1, proof1);
         makeProof(HASH_FILE2, proof2);
@@ -145,6 +154,11 @@ contract XZ21Test is Test {
         // SP creates again a proof for a request that has already been processed.
         vm.expectRevert(bytes("Not WaitingProof"));
         makeProof(HASH_FILE1, proof1);
+
+        // !!! Error case !!!
+        vm.prank(ADDR_SP);
+        vm.expectRevert(bytes("TPA authentication error"));
+        c.SetAuditingResult(HASH_FILE1, true);
 
         // TPA verifies proofs.
         vm.expectEmit(false, false, false, true); emit XZ21.EventSetAuditingResult(HASH_FILE1, true); // Event log

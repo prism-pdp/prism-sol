@@ -60,6 +60,25 @@ contract XZ21 {
         _;
     }
 
+    modifier onlyBySU()
+    {
+        require(userAccountTable[msg.sender].pubKey.length > 0, "SU authentication error");
+        _;
+    }
+
+    modifier onlyByTPA()
+    {
+        bool found = false;
+        for (uint i = 0; i < auditorAddrList.length; i++) {
+            if (auditorAddrList[i] == msg.sender) {
+                found = true;
+                break;
+            }
+        }
+        require(found, "TPA authentication error");
+        _;
+    }
+
     constructor(
         address _addrSP
     )
@@ -158,7 +177,10 @@ contract XZ21 {
         userAccountTable[_owner].fileList.push(_hash);
     }
 
-    function SetChal(bytes32 _hash, bytes calldata _chal) public {
+    function SetChal(
+        bytes32 _hash,
+        bytes calldata _chal
+    ) public onlyBySU() {
         require(auditingReqTable[_hash].stage == Stages.WaitingChal, "Not WaitingChal");
 
         auditingReqTable[_hash].chal = _chal;
@@ -167,7 +189,10 @@ contract XZ21 {
         auditingReqTable[_hash].stage = Stages.WaitingProof;
     }
 
-    function SetProof(bytes32 _hash, bytes calldata _proof) public {
+    function SetProof(
+        bytes32 _hash,
+        bytes calldata _proof
+    ) public onlyBy(addrSP) {
         require(auditingReqTable[_hash].stage == Stages.WaitingProof, "Not WaitingProof");
 
         auditingReqTable[_hash].proof = _proof;
@@ -187,7 +212,10 @@ contract XZ21 {
         return (fileList, reqList);
     }
 
-    function SetAuditingResult(bytes32 _hash, bool _result) public {
+    function SetAuditingResult(
+        bytes32 _hash,
+        bool _result
+    ) public onlyByTPA() {
         require(auditingReqTable[_hash].stage == Stages.WaitingResult, "Not WaitingResult");
 
         if (auditingLogTable[_hash].length > 0) {
