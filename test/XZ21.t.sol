@@ -175,9 +175,6 @@ contract XZ21Test is Test {
         checkLog(ADDR_USER1, HASH_FILE1, 0, chal1, proof1, true, date1);
         checkLog(ADDR_USER1, HASH_FILE2, 0, chal2, proof2, true, date1);
 
-        // Check if the request is empty
-        checkBlank();
-
         // !!! Error case !!!
         // Request auditing for FILE1 again, and register the log with a timestamp earlier than the previous result.
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
@@ -212,12 +209,5 @@ contract XZ21Test is Test {
         assertEq(logs[_index].req.proof, _proof);
         assertEq(logs[_index].result, _result);
         assertEq(logs[_index].date, _date);
-    }
-
-    function checkBlank() private {
-        vm.prank(ADDR_TPA);
-        (bytes32[] memory fileList, XZ21.AuditingReq[] memory reqList) = c.GetAuditingReqList();
-        assertEq(fileList.length, 0);
-        assertEq(reqList.length, 0);
     }
 }

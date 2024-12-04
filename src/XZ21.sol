@@ -16,8 +16,6 @@ contract XZ21 {
     mapping(bytes32 => AuditingReq) private auditingReqTable;
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
-    bytes32[] reqBuffer;
-
     enum Stages {
         WaitingChal,
         WaitingProof,
@@ -184,7 +182,6 @@ contract XZ21 {
         require(auditingReqTable[_hash].stage == Stages.WaitingChal, "Not WaitingChal");
 
         auditingReqTable[_hash].chal = _chal;
-        reqBuffer.push(_hash);
 
         auditingReqTable[_hash].stage = Stages.WaitingProof;
     }
@@ -200,16 +197,8 @@ contract XZ21 {
         auditingReqTable[_hash].stage = Stages.WaitingResult;
     }
 
-    function GetAuditingReqList() public view returns(bytes32[] memory, AuditingReq[] memory) {
-        uint num = reqBuffer.length;
-        bytes32[] memory fileList = new bytes32[](num);
-        AuditingReq[] memory reqList = new AuditingReq[](num);
-        for (uint i = 0; i < num; i++) {
-            bytes32 h = reqBuffer[i];
-            fileList[i] = h;
-            reqList[i] = auditingReqTable[h];
-        }
-        return (fileList, reqList);
+    function GetAuditingReq(bytes32 _hash) public view returns(AuditingReq memory) {
+        return auditingReqTable[_hash];
     }
 
     function SetAuditingResult(
@@ -233,29 +222,10 @@ contract XZ21 {
         // Remove AuditingReq from the map
         auditingReqTable[_hash] = AuditingReq("", "", Stages.WaitingChal);
 
-        // Remove hash from the list
-        deleteReqBuffer(_hash);
-
         emit EventSetAuditingResult(_hash, _result);
     }
 
     function GetAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
         return auditingLogTable[_hash];
-    }
-
-    function deleteReqBuffer(bytes32 _hash) private {
-        bool found = false;
-        uint found_index = 0;
-        for (uint i = 0; i < reqBuffer.length; i++) {
-            if (_hash == reqBuffer[i]) {
-                found = true;
-                found_index = i;
-                break;
-            }
-        }
-        for (uint i = found_index; i < reqBuffer.length - 1; i++) {
-            reqBuffer[i] = reqBuffer[i+1];
-        }
-        reqBuffer.pop();
     }
 }
