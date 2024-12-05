@@ -13,13 +13,12 @@ contract XZ21 {
 
     mapping(address => Account) private userAccountTable;
     mapping(bytes32 => FileProperty) private fileIndexTable;
-    mapping(bytes32 => AuditingReq) private auditingReqTable;
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
     enum Stages {
-        WaitingChal,
         WaitingProof,
-        WaitingResult
+        WaitingResult,
+        DoneAuditing
     }
 
     struct Param {
@@ -38,16 +37,12 @@ contract XZ21 {
         address creator; // Owner list
     }
 
-    struct AuditingReq {
+    struct AuditingLog {
         bytes chal;
         bytes proof;
-        Stages stage;
-    }
-
-    struct AuditingLog {
-        AuditingReq req;
         bool result;
         uint256 date;
+        Stages stage;
     }
 
     event EventSetAuditingResult(bytes32 _hash, bool _result);
@@ -179,48 +174,59 @@ contract XZ21 {
         bytes32 _hash,
         bytes calldata _chal
     ) public onlyBySU() {
-        require(auditingReqTable[_hash].stage == Stages.WaitingChal, "Not WaitingChal");
+        uint size = auditingLogTable[_hash].length;
+        if (size > 0) {
+            uint pos = size - 1;
+            require(auditingLogTable[_hash][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
+        }
 
-        auditingReqTable[_hash].chal = _chal;
-
-        auditingReqTable[_hash].stage = Stages.WaitingProof;
+        AuditingLog memory log = AuditingLog(
+            _chal,
+            "",
+            false,
+            0,
+            Stages.WaitingProof
+        );
+        auditingLogTable[_hash].push(log);
     }
 
     function SetProof(
         bytes32 _hash,
         bytes calldata _proof
     ) public onlyBy(addrSP) {
-        require(auditingReqTable[_hash].stage == Stages.WaitingProof, "Not WaitingProof");
+        uint size = auditingLogTable[_hash].length;
+        require(size > 0, "Missing challenge");
+        uint pos = size - 1;
+        require(auditingLogTable[_hash][pos].stage == Stages.WaitingProof, "Not WaitingProof");
 
-        auditingReqTable[_hash].proof = _proof;
-
-        auditingReqTable[_hash].stage = Stages.WaitingResult;
+        auditingLogTable[_hash][pos].proof = _proof;
+        auditingLogTable[_hash][pos].stage = Stages.WaitingResult;
     }
 
-    function GetAuditingReq(bytes32 _hash) public view returns(AuditingReq memory) {
-        return auditingReqTable[_hash];
+    function GetLatestAuditingLog(bytes32 _hash) public view returns(AuditingLog memory) {
+        uint size = auditingLogTable[_hash].length;
+        require(size > 0, "No data");
+        uint pos = size - 1;
+        return auditingLogTable[_hash][pos];
     }
 
     function SetAuditingResult(
         bytes32 _hash,
         bool _result
     ) public onlyByTPA() {
-        require(auditingReqTable[_hash].stage == Stages.WaitingResult, "Not WaitingResult");
+        uint size = auditingLogTable[_hash].length;
+        require(size > 0, "Missing proof");
+        uint pos = size - 1;
+        require(auditingLogTable[_hash][pos].stage == Stages.WaitingResult, "Not WaitingResult");
 
-        if (auditingLogTable[_hash].length > 0) {
-            uint tail = auditingLogTable[_hash].length - 1;
+        if (pos > 0) {
+            uint tail = pos - 1;
             require(auditingLogTable[_hash][tail].date < block.timestamp, "timestamp error");
         }
 
-        AuditingLog memory log = AuditingLog(
-            auditingReqTable[_hash],
-            _result,
-            block.timestamp
-        );
-        auditingLogTable[_hash].push(log);
-
-        // Remove AuditingReq from the map
-        auditingReqTable[_hash] = AuditingReq("", "", Stages.WaitingChal);
+        auditingLogTable[_hash][pos].result = _result;
+        auditingLogTable[_hash][pos].date = block.timestamp;
+        auditingLogTable[_hash][pos].stage = Stages.DoneAuditing;
 
         emit EventSetAuditingResult(_hash, _result);
     }

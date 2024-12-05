@@ -205,9 +205,10 @@ contract XZ21Test is Test {
     function checkLog(address _user, bytes32 _hash, uint _index, bytes memory _chal, bytes memory _proof, bool _result, uint256 _date) private {
         vm.prank(_user);
         XZ21.AuditingLog[] memory logs = c.GetAuditingLogs(_hash);
-        assertEq(logs[_index].req.chal, _chal);
-        assertEq(logs[_index].req.proof, _proof);
+        assertEq(logs[_index].chal, _chal);
+        assertEq(logs[_index].proof, _proof);
         assertEq(logs[_index].result, _result);
+        assertEq(uint(logs[_index].stage), uint(XZ21.Stages.Done));
         assertEq(logs[_index].date, _date);
     }
 }
