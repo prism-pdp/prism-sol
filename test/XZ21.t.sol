@@ -208,7 +208,7 @@ contract XZ21Test is Test {
         assertEq(logs[_index].chal, _chal);
         assertEq(logs[_index].proof, _proof);
         assertEq(logs[_index].result, _result);
-        assertEq(uint(logs[_index].stage), uint(XZ21.Stages.Done));
+        assertEq(uint(logs[_index].stage), uint(XZ21.Stages.DoneAuditing));
         assertEq(logs[_index].date, _date);
     }
 }
