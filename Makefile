@@ -12,4 +12,4 @@ shell:
 	docker run -it --rm --volume .:/app $(IMAGE_NAME)
 
 test:
-	docker run -it --rm --volume .:/app $(IMAGE_NAME) forge test -vvv
+	docker run -it --rm --volume .:/app $(IMAGE_NAME) forge test -vvv --gas-report
