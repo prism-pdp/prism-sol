@@ -1,8 +1,8 @@
-# dpduado-sol
+# prism-sol
 
 ## Description
 
-dpduado-sol is a solidity project for dpduado.
+prism-sol is a solidity project for prism.
 This project is created from [foundry][link:foundry].
 
 ## Tips for developers

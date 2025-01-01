@@ -1,4 +1,4 @@
-IMAGE_NAME = dpduado-sol
+IMAGE_NAME = prism-sol
 
 .PHONY: test
 
