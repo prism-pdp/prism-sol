@@ -25,11 +25,11 @@ RUN apk update \
         vim \
         jq
 
-WORKDIR /app
+WORKDIR /opt/prism-net
 
-COPY lib /app/lib
-COPY src /app/src
-COPY test /app/test
+COPY lib /opt/prism-net/lib
+COPY src /opt/prism-net/src
+COPY test /opt/prism-net/test
 
 RUN forge build
 
@@ -38,7 +38,16 @@ ENV BALANCE_ACCOUNTS=300
 ENV RPC_HOST=0.0.0.0
 ENV RPC_PORT=8545
 ENV WALLET_MNEMONIC="chaos knee unit sing method banana chicken quote script boat crouch pig"
+ENV PRISM_DIR=/opt/prism-net
+ENV PRISM_BINDINGS_DIR=$PRISM_DIR/bindings
+ENV PRISM_DATA_DIR=/var/lib/prism-net
+ENV PRISM_CACHE_DIR=$PRISM_DATA_DIR/cache
 
 COPY --chmod=755 ./docker/entrypoint.sh /entrypoint.sh
+
+RUN mkdir -p $PRISM_CACHE_DIR
+RUN mkdir -p $PRISM_BINDINGS_DIR
+
+RUN /entrypoint.sh bindings
 
 ENTRYPOINT [ "/entrypoint.sh" ]

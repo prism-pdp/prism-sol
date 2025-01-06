@@ -1,9 +1,5 @@
 #!/bin/sh
 
-PATH_VOL=/var/lib/prism-sol
-
-mkdir -p $PATH_VOL/cache
-
 function get_addr()
 {
     index="$1"
@@ -25,8 +21,8 @@ elif [ "$1" = "deploy" ]; then
 	forge create \
 		--private-key ${private_key} \
 		src/${contract}.sol:${contract} \
-		--constructor-args ${args} > $PATH_VOL/cache/deploy.log
-	cat $PATH_VOL/cache/deploy.log | grep 'Deployed to:' | cut -d ':' -f 2 | tr -d ' ' | cut -c 3-
+		--constructor-args ${args} > $PRISM_CACHE_DIR/deploy.log
+	cat $PRISM_CACHE_DIR/deploy.log | grep 'Deployed to:' | cut -d ':' -f 2 | tr -d ' ' | cut -c 3-
 elif [ "$1" = "show-accounts" ]; then
     for i in $(seq $NUM_ACCOUNTS)
     do
@@ -36,12 +32,13 @@ elif [ "$1" = "show-accounts" ]; then
         echo "ADDRESS_$num=$address"
         echo "PRIVKEY_$num=$privkey"
     done
-elif [ "$1" = "build" ]; then
+elif [ "$1" = "bindings" ]; then
     for f in $(ls src/*.sol); do
         name=$(basename $f .sol)
-        jq -c '.abi' ./out/${name}.sol/${name}.json > $PATH_VOL/cache/${name}.abi
-        jq -c -r '.bytecode.object' ./out/${name}.sol/${name}.json > $PATH_VOL/cache/${name}.bin
-        abigen --abi $PATH_VOL/cache/${name}.abi --bin $PATH_VOL/cache/${name}.bin --pkg sol --type ${name} --out $PATH_VOL/cache/${name}.go
+        pkg=$(echo $name | tr 'A-Z' 'a-z')
+        jq -c '.abi' ./out/${name}.sol/${name}.json > $PRISM_BINDINGS_DIR/${name}.abi
+        jq -c -r '.bytecode.object' ./out/${name}.sol/${name}.json > $PRISM_BINDINGS_DIR/${name}.bin
+        abigen --abi $PRISM_BINDINGS_DIR/${name}.abi --bin $PRISM_BINDINGS_DIR/${name}.bin --pkg $pkg --type ${name} --out $PRISM_BINDINGS_DIR/${name}.go
     done
 elif [ "$1" = "start" ]; then
     anvil \
