@@ -1,4 +1,4 @@
-IMAGE_NAME = prism-sol
+IMAGE_NAME = prism/prism-sol
 
 .PHONY: test
 

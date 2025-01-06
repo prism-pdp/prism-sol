@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim as builder
+FROM debian:bullseye-slim AS builder
 
 ARG GETH_ALLTOOLS="geth-alltools-linux-amd64-1.14.3-ab48ba42"
 
@@ -26,6 +26,18 @@ RUN apk update \
         jq
 
 WORKDIR /app
+
+COPY lib /app/lib
+COPY src /app/src
+COPY test /app/test
+
+RUN forge build
+
+ENV NUM_ACCOUNTS=6
+ENV BALANCE_ACCOUNTS=300
+ENV RPC_HOST=0.0.0.0
+ENV RPC_PORT=8545
+ENV WALLET_MNEMONIC="chaos knee unit sing method banana chicken quote script boat crouch pig"
 
 COPY --chmod=755 ./docker/entrypoint.sh /entrypoint.sh
 
