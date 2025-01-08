@@ -4,15 +4,15 @@
 
 ## Features
 
-- Implements PRISM in Solidity
-- Seamless integration with Ethereum-based smart contracts
+- Blockchain-side implementation of PRISM
+- Solidity-based smart contracts for Ethereum integration
 - Easy setup using Docker and Foundry
 
 ## Technologies Used
 
 - [**Solidity**](https://soliditylang.org/): For developing smart contracts
-- [**Docker**](https://www.docker.com/): For environment virtualization and management
 - [**Foundry**](https://book.getfoundry.sh/): For smart contract development and testing
+- [**Docker**](https://www.docker.com/): For environment virtualization and management
 
 ## Installation
 
