@@ -10,15 +10,15 @@
 
 ## Technologies Used
 
-- <a href="https://soliditylang.org/" target="_blank">**Solidity**</a>: For developing smart contracts
-- <a href="https://www.docker.com/" target="_blank">**Docker**</a>: For environment virtualization and management
-- <a href="https://book.getfoundry.sh/">**Foundry**</a>: For smart contract development and testing
+- [**Solidity**](https://soliditylang.org/): For developing smart contracts
+- [**Docker**](https://www.docker.com/): For environment virtualization and management
+- [**Foundry**](https://book.getfoundry.sh/): For smart contract development and testing
 
 ## Installation
 
 ### 1. Install Docker
 
-Follow the <a href="https://docs.docker.com/get-docker/">official guide</a> to install Docker.
+Follow the [official guide](https://docs.docker.com/get-docker/) to install Docker.
 
 ### 2. Clone the repository
 
