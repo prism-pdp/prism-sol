@@ -1,34 +1,40 @@
 # prism-sol
 
-## Description
+*prism-sol* is a Solidity project for PRISM, which is a Provable Data Possession (PDP) system.
 
-prism-sol is a solidity project for prism.
-This project is created from [foundry][link:foundry].
+## Features
 
-## Tips for developers
+- Implements PRISM in Solidity
+- Seamless integration with Ethereum-based smart contracts
+- Easy setup using Docker and Foundry
 
-### Coding
+## Technologies Used
 
-Solidity source codes should be placed in `src` directory.
+- <a href="https://soliditylang.org/" target="_blank">**Solidity**</a>: For developing smart contracts
+- <a href="https://www.docker.com/" target="_blank">**Docker**</a>: For environment virtualization and management
+- <a href="https://book.getfoundry.sh/">**Foundry**</a>: For smart contract development and testing
 
-### Building
+## Installation
 
-You can build solidity source codes with following command.
+### 1. Install Docker
 
-```sh
-make build
+Follow the <a href="https://docs.docker.com/get-docker/">official guide</a> to install Docker.
+
+### 2. Clone the repository
+
+```bash
+git clone --recursive https://github.com/prism-pdp/prism-sol.git
 ```
 
-This command also generates Go bindings.
-The bindings is placed in `go-bindings` directory.
+### 3. Build the Docker image
 
-### Testing
+```bash
+make build-img
+```
 
-Test codes should be placed in `test` directory.
-You can run tests with following command.
+## Testing
 
-```sh
+```bash
 make test
 ```
 
-[link:foundry]: https://book.getfoundry.sh/ "foundry"
