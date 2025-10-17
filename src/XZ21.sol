@@ -1,7 +1,5 @@
 // SPDX-License-Identofier: UNLICENSED
-pragma solidity ^0.8.13;
-
-import "forge-std/console.sol";
+pragma solidity ^0.8.24;
 
 contract XZ21 {
     Param param;
@@ -45,7 +43,7 @@ contract XZ21 {
         Stages stage;
     }
 
-    event EventSetAuditingResult(bytes32 _hash, bool _result);
+    event EventSetAuditingResult(bytes32 hash, bool result);
 
     modifier onlyBy(address _addr)
     {
@@ -76,162 +74,162 @@ contract XZ21 {
         address _addrSP
     )
     {
+        require(_addrSP != address(0), "addrSP is zero");
         addrSM = msg.sender;
         addrSP = _addrSP;
         doneRegisterParam = false;
     }
 
-    function RegisterParam(
-        string memory _p,
-        bytes memory _g,
-        bytes memory _u
+    function registerParam(
+        string memory paramP,
+        bytes memory paramG,
+        bytes memory paramU
     ) onlyBy(addrSM) public
     {
-        require(doneRegisterParam == false, "Do not overwrite RegisterParam");
-        param.P = _p;
-        param.U = _u;
-        param.G = _g;
+        require(!doneRegisterParam, "Do not overwrite registerParam");
+        param.P = paramP;
+        param.U = paramU;
+        param.G = paramG;
         doneRegisterParam = true;
     }
 
-    function EnrollAccount(
-        int _type,
-        address _addr,
-        bytes calldata _pubKey
+    function enrollAccount(
+        int accountType,
+        address addr,
+        bytes calldata pubKey
     ) public onlyBy(addrSM) returns(bool)
     {
-        require(_type == 0 || _type == 1, "Invalid type");
+        require(accountType == 0 || accountType == 1, "Invalid account type");
 
-        if (_type == 0) {
+        if (accountType == 0) {
             bool found = false;
-            for (uint i = 0; i < auditorAddrList.length; i++) {
-                if (auditorAddrList[i] == _addr) {
+            uint len = auditorAddrList.length;
+            for (uint i = 0; i < len; i++) {
+                if (auditorAddrList[i] == addr) {
                     found = true;
                     break;
                 }
             }
-            require(found == false, "Duplicate TPA address");
-            console.log("Enroll TPA account (Address:%s)", _addr);
-            auditorAddrList.push(_addr);
+            require(!found, "Duplicate TPA address");
+            auditorAddrList.push(addr);
         } else {
-            require(userAccountTable[_addr].pubKey.length == 0, "Duplicate SU account");
-            console.log("Enroll SU account (Address:%s)", _addr);
-            userAccountTable[_addr] = Account(_pubKey, new bytes32[](0));
+            require(userAccountTable[addr].pubKey.length == 0, "Duplicate SU account");
+            userAccountTable[addr] = Account(pubKey, new bytes32[](0));
         }
 
         return true;
     }
 
-    function GetUserAccount(
-        address _addr
+    function getUserAccount(
+        address addr
     ) public view returns(Account memory) {
-        return userAccountTable[_addr];
+        return userAccountTable[addr];
     }
 
-    function GetAuditorAddrList() public view returns(address[] memory) {
+    function getAuditorAddrList() public view returns(address[] memory) {
         return auditorAddrList;
     }
 
-    function GetParam() public view returns(Param memory) {
+    function getParam() public view returns(Param memory) {
         return param;
     }
 
-    function RegisterFile(
-        bytes32 _hash,
-        uint32 _splitNum,
-        address _owner
+    function registerFile(
+        bytes32 hash,
+        uint32 splitNum,
+        address owner
     ) public onlyBy(addrSP) {
-        require(_splitNum > 0, "invalid split num");
+        require(splitNum > 0, "invalid split num");
 
-        fileIndexTable[_hash].splitNum = _splitNum;
-        fileIndexTable[_hash].creator = _owner;
-        userAccountTable[_owner].fileList.push(_hash);
+        fileIndexTable[hash].splitNum = splitNum;
+        fileIndexTable[hash].creator = owner;
+        userAccountTable[owner].fileList.push(hash);
     }
 
-    function SearchFile(bytes32 _hash) public view returns(FileProperty memory) {
-        return fileIndexTable[_hash];
+    function searchFile(bytes32 hash) public view returns(FileProperty memory) {
+        return fileIndexTable[hash];
     }
 
-    function GetFileList(address _owner) public view returns(bytes32[] memory) {
-        uint fileListLength = userAccountTable[_owner].fileList.length;
+    function getFileList(address owner) public view returns(bytes32[] memory) {
+        uint fileListLength = userAccountTable[owner].fileList.length;
         bytes32[] memory fileList = new bytes32[](fileListLength);
-        for(uint i = 0; i < userAccountTable[_owner].fileList.length; i++) {
-            fileList[i] = userAccountTable[_owner].fileList[i];
+        for(uint i = 0; i < userAccountTable[owner].fileList.length; i++) {
+            fileList[i] = userAccountTable[owner].fileList[i];
         }
         return fileList;
     }
 
-    function AppendOwner(
-        bytes32 _hash,
-        address _owner
+    function appendOwner(
+        bytes32 hash,
+        address owner
     ) public onlyBy(addrSP) {
-        require(fileIndexTable[_hash].splitNum > 0, "invalid file");
+        require(fileIndexTable[hash].splitNum > 0, "invalid file");
 
-        userAccountTable[_owner].fileList.push(_hash);
+        userAccountTable[owner].fileList.push(hash);
     }
 
-    function SetChal(
-        bytes32 _hash,
-        bytes calldata _chal
+    function setChal(
+        bytes32 hash,
+        bytes calldata chal
     ) public onlyBySU() {
-        uint size = auditingLogTable[_hash].length;
+        uint size = auditingLogTable[hash].length;
         if (size > 0) {
             uint pos = size - 1;
-            require(auditingLogTable[_hash][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
+            require(auditingLogTable[hash][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
         }
 
         AuditingLog memory log = AuditingLog(
-            _chal,
+            chal,
             "",
             false,
             0,
             Stages.WaitingProof
         );
-        auditingLogTable[_hash].push(log);
+        auditingLogTable[hash].push(log);
     }
 
-    function SetProof(
-        bytes32 _hash,
-        bytes calldata _proof
+    function setProof(
+        bytes32 hash,
+        bytes calldata proof
     ) public onlyBy(addrSP) {
-        uint size = auditingLogTable[_hash].length;
+        uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing challenge");
         uint pos = size - 1;
-        require(auditingLogTable[_hash][pos].stage == Stages.WaitingProof, "Not WaitingProof");
+        require(auditingLogTable[hash][pos].stage == Stages.WaitingProof, "Not WaitingProof");
 
-        auditingLogTable[_hash][pos].proof = _proof;
-        auditingLogTable[_hash][pos].stage = Stages.WaitingResult;
+        auditingLogTable[hash][pos].proof = proof;
+        auditingLogTable[hash][pos].stage = Stages.WaitingResult;
     }
 
-    function GetLatestAuditingLog(bytes32 _hash) public view returns(AuditingLog memory) {
-        uint size = auditingLogTable[_hash].length;
+    function getLatestAuditingLog(bytes32 hash) public view returns(AuditingLog memory) {
+        uint size = auditingLogTable[hash].length;
         require(size > 0, "No data");
         uint pos = size - 1;
-        return auditingLogTable[_hash][pos];
+        return auditingLogTable[hash][pos];
     }
 
-    function SetAuditingResult(
-        bytes32 _hash,
-        bool _result
+    function setAuditingResult(
+        bytes32 hash,
+        bool result
     ) public onlyByTPA() {
-        uint size = auditingLogTable[_hash].length;
+        uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing proof");
         uint pos = size - 1;
-        require(auditingLogTable[_hash][pos].stage == Stages.WaitingResult, "Not WaitingResult");
+        require(auditingLogTable[hash][pos].stage == Stages.WaitingResult, "Not WaitingResult");
 
         if (pos > 0) {
             uint tail = pos - 1;
-            require(auditingLogTable[_hash][tail].date < block.timestamp, "timestamp error");
+            require(auditingLogTable[hash][tail].date < block.timestamp, "timestamp error");
         }
 
-        auditingLogTable[_hash][pos].result = _result;
-        auditingLogTable[_hash][pos].date = block.timestamp;
-        auditingLogTable[_hash][pos].stage = Stages.DoneAuditing;
+        auditingLogTable[hash][pos].result = result;
+        auditingLogTable[hash][pos].date = block.timestamp;
+        auditingLogTable[hash][pos].stage = Stages.DoneAuditing;
 
-        emit EventSetAuditingResult(_hash, _result);
+        emit EventSetAuditingResult(hash, result);
     }
 
-    function GetAuditingLogs(bytes32 _hash) public view returns(AuditingLog[] memory) {
-        return auditingLogTable[_hash];
+    function getAuditingLogs(bytes32 hash) public view returns(AuditingLog[] memory) {
+        return auditingLogTable[hash];
     }
 }

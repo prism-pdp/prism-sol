@@ -43,7 +43,7 @@ ENV PRISM_BINDINGS_DIR=$PRISM_DIR/bindings
 ENV PRISM_DATA_DIR=/var/lib/prism-net
 ENV PRISM_CACHE_DIR=$PRISM_DATA_DIR/cache
 
-COPY --chmod=755 ./docker/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 ./docker/foundry/entrypoint.sh /entrypoint.sh
 
 RUN mkdir -p $PRISM_CACHE_DIR
 RUN mkdir -p $PRISM_BINDINGS_DIR

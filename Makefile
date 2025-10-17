@@ -1,9 +1,10 @@
 IMAGE_NAME = prism/prism-sol
+ETH_SECURITY_TOOLBOX = est
 
 .PHONY: test
 
 build-img:
-	docker build -t $(IMAGE_NAME) .	
+	docker build -t $(IMAGE_NAME) -f docker/Dockerfile.foundry .	
 	$(MAKE) bindings
 
 bindings:
@@ -16,3 +17,8 @@ shell:
 
 test:
 	docker run -it --rm $(IMAGE_NAME) forge test -vvv --gas-report
+
+slither:
+	docker run -it --rm -v "$(PWD)":/share -w /share \
+		$(ETH_SECURITY_TOOLBOX) \
+		bash -lc 'slither .'

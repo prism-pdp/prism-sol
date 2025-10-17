@@ -37,86 +37,86 @@ contract XZ21Test is Test {
         vm.prank(ADDR_SM);
         c = new XZ21(ADDR_SP);
         vm.prank(ADDR_SM);
-        c.RegisterParam(P, G, U);
+        c.registerParam(P, G, U);
         vm.prank(ADDR_SM);
-        vm.expectRevert(bytes("Do not overwrite RegisterParam"));
-        c.RegisterParam(P, G, U);
+        vm.expectRevert(bytes("Do not overwrite registerParam"));
+        c.registerParam(P, G, U);
         vm.prank(ADDR_SM);
         vm.expectRevert(bytes("Invalid type"));
-        c.EnrollAccount(9, ADDR_TPA, "");
+        c.enrollAccount(9, ADDR_TPA, "");
         vm.prank(ADDR_SM);
-        c.EnrollAccount(0, ADDR_TPA, "");
+        c.enrollAccount(0, ADDR_TPA, "");
         vm.prank(ADDR_SM);
         vm.expectRevert(bytes("Duplicate TPA address"));
-        c.EnrollAccount(0, ADDR_TPA, "");
+        c.enrollAccount(0, ADDR_TPA, "");
         vm.prank(ADDR_SM);
-        c.EnrollAccount(1, ADDR_USER1, KEY_USER1);
+        c.enrollAccount(1, ADDR_USER1, KEY_USER1);
         vm.prank(ADDR_SM);
-        c.EnrollAccount(1, ADDR_USER2, KEY_USER2);
+        c.enrollAccount(1, ADDR_USER2, KEY_USER2);
         vm.prank(ADDR_SM);
-        c.EnrollAccount(1, ADDR_USER3, KEY_USER3);
+        c.enrollAccount(1, ADDR_USER3, KEY_USER3);
         vm.prank(ADDR_SM);
         vm.expectRevert(bytes("Duplicate SU account"));
-        c.EnrollAccount(1, ADDR_USER3, KEY_USER3);
+        c.enrollAccount(1, ADDR_USER3, KEY_USER3);
     }
 
     function testSetupPhase() public view {
         address addrSM = c.addrSM();
         assertEq(addrSM, ADDR_SM);
 
-        address[] memory addrListTPA = c.GetAuditorAddrList();
+        address[] memory addrListTPA = c.getAuditorAddrList();
         assertEq(addrListTPA.length, 1);
         assertEq(addrListTPA[0], ADDR_TPA);
 
         address addrSP = c.addrSP();
         assertEq(addrSP, ADDR_SP);
 
-        XZ21.Param memory param = c.GetParam();
+        XZ21.Param memory param = c.getParam();
         assertEq(param.P, P);
         assertEq(param.G, G);
         assertEq(param.U, U);
 
-        XZ21.Account memory su1 = c.GetUserAccount(ADDR_USER1);
+        XZ21.Account memory su1 = c.getUserAccount(ADDR_USER1);
         assertEq(su1.pubKey, KEY_USER1);
 
-        XZ21.Account memory su2 = c.GetUserAccount(ADDR_USER2);
+        XZ21.Account memory su2 = c.getUserAccount(ADDR_USER2);
         assertEq(su2.pubKey, KEY_USER2);
 
-        XZ21.Account memory su3 = c.GetUserAccount(ADDR_USER3);
+        XZ21.Account memory su3 = c.getUserAccount(ADDR_USER3);
         assertEq(su3.pubKey, KEY_USER3);
 
-        XZ21.Account memory su0 = c.GetUserAccount(ADDR_USER0);
+        XZ21.Account memory su0 = c.getUserAccount(ADDR_USER0);
         assertEq(su0.pubKey, "");
     }
 
     function testUploadPhase() public {
         vm.prank(ADDR_USER1);
-        XZ21.FileProperty memory fileProp = c.SearchFile(HASH_FILE1);
+        XZ21.FileProperty memory fileProp = c.searchFile(HASH_FILE1);
         assertEq(address(0), fileProp.creator);
         assertEq(0, fileProp.splitNum);
 
         vm.expectRevert(bytes("Authentication error"));
-        vm.prank(ADDR_USER1); c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
+        vm.prank(ADDR_USER1); c.registerFile(HASH_FILE1, 9, ADDR_USER1);
 
         vm.expectRevert(bytes("Authentication error"));
-        vm.prank(ADDR_USER1); c.AppendOwner(HASH_FILE2, ADDR_USER2);
+        vm.prank(ADDR_USER1); c.appendOwner(HASH_FILE2, ADDR_USER2);
 
-        vm.prank(ADDR_SP); c.RegisterFile(HASH_FILE1, 9, ADDR_USER1);
-        vm.prank(ADDR_SP); c.RegisterFile(HASH_FILE2, 20, ADDR_USER1);
-        vm.prank(ADDR_SP); c.AppendOwner(HASH_FILE2, ADDR_USER2);
+        vm.prank(ADDR_SP); c.registerFile(HASH_FILE1, 9, ADDR_USER1);
+        vm.prank(ADDR_SP); c.registerFile(HASH_FILE2, 20, ADDR_USER1);
+        vm.prank(ADDR_SP); c.appendOwner(HASH_FILE2, ADDR_USER2);
 
         vm.prank(ADDR_SP);
-        fileProp = c.SearchFile(HASH_FILE1);
+        fileProp = c.searchFile(HASH_FILE1);
         assertEq(ADDR_USER1, fileProp.creator);
         assertEq(9, fileProp.splitNum);
 
         vm.prank(ADDR_USER1);
-        bytes32[] memory fileList1 = c.GetFileList(ADDR_USER1);
+        bytes32[] memory fileList1 = c.getFileList(ADDR_USER1);
         assertEq(fileList1[0], HASH_FILE1);
         assertEq(fileList1[1], HASH_FILE2);
 
         vm.prank(ADDR_USER2);
-        bytes32[] memory fileList2 = c.GetFileList(ADDR_USER2);
+        bytes32[] memory fileList2 = c.getFileList(ADDR_USER2);
         assertEq(fileList2[0], HASH_FILE2);
     }
 
@@ -130,7 +130,7 @@ contract XZ21Test is Test {
 
         vm.prank(ADDR_SP);
         vm.expectRevert(bytes("SU authentication error"));
-        c.SetChal(HASH_FILE1, chal1);
+        c.setChal(HASH_FILE1, chal1);
 
         // USER1 reqests audiging of FILE1 and FILE2.
         reqAuditing(ADDR_USER1, HASH_FILE1, chal1);
@@ -144,7 +144,7 @@ contract XZ21Test is Test {
         // !!! Error case !!!
         vm.prank(ADDR_USER1);
         vm.expectRevert("Authentication error");
-        c.SetProof(HASH_FILE1, proof1);
+        c.setProof(HASH_FILE1, proof1);
 
         // SP makes proofs.
         makeProof(HASH_FILE1, proof1);
@@ -158,7 +158,7 @@ contract XZ21Test is Test {
         // !!! Error case !!!
         vm.prank(ADDR_SP);
         vm.expectRevert(bytes("TPA authentication error"));
-        c.SetAuditingResult(HASH_FILE1, true);
+        c.setAuditingResult(HASH_FILE1, true);
 
         // TPA verifies proofs.
         vm.expectEmit(false, false, false, true); emit XZ21.EventSetAuditingResult(HASH_FILE1, true); // Event log
@@ -182,29 +182,29 @@ contract XZ21Test is Test {
         vm.prank(ADDR_TPA);
         vm.warp(date0);
         vm.expectRevert(bytes("timestamp error"));
-        c.SetAuditingResult(HASH_FILE1, false);
+        c.setAuditingResult(HASH_FILE1, false);
     }
 
     function reqAuditing(address _user, bytes32 _hash, bytes memory _chal) private {
         // A user reqests audiging of a file.
         vm.prank(_user);
-        c.SetChal(_hash, _chal);
+        c.setChal(_hash, _chal);
     }
 
     function makeProof(bytes32 _hash, bytes memory _proof) private {
         vm.prank(ADDR_SP);
-        c.SetProof(_hash, _proof);
+        c.setProof(_hash, _proof);
     }
 
     function verifyProof(bytes32 _hash, bool _result, uint256 _date) private {
         vm.prank(ADDR_TPA);
         vm.warp(_date);
-        c.SetAuditingResult(_hash, _result);
+        c.setAuditingResult(_hash, _result);
     }
 
     function checkLog(address _user, bytes32 _hash, uint _index, bytes memory _chal, bytes memory _proof, bool _result, uint256 _date) private {
         vm.prank(_user);
-        XZ21.AuditingLog[] memory logs = c.GetAuditingLogs(_hash);
+        XZ21.AuditingLog[] memory logs = c.getAuditingLogs(_hash);
         assertEq(logs[_index].chal, _chal);
         assertEq(logs[_index].proof, _proof);
         assertEq(logs[_index].result, _result);
