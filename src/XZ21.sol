@@ -45,19 +45,25 @@ contract XZ21 {
 
     event EventSetAuditingResult(bytes32 hash, bool result);
 
-    modifier onlyBy(address _addr)
+    modifier isSM()
     {
-        require(msg.sender == _addr, "Authentication error");
+        require(addrSM == msg.sender, "Authentication error (Only by SM)");
         _;
     }
 
-    modifier onlyBySU()
+    modifier isSP()
     {
-        require(userAccountTable[msg.sender].pubKey.length > 0, "SU authentication error");
+        require(addrSP == msg.sender, "Authentication error (Only by SP)");
         _;
     }
 
-    modifier onlyByTPA()
+    modifier isSU()
+    {
+        require(userAccountTable[msg.sender].pubKey.length > 0, "Authentiction error (Only by SU)");
+        _;
+    }
+
+    modifier isTPA()
     {
         bool found = false;
         for (uint i = 0; i < auditorAddrList.length; i++) {
@@ -66,10 +72,10 @@ contract XZ21 {
                 break;
             }
         }
-        require(found, "TPA authentication error");
+        require(found, "Authentication error (Only by TPA)");
         _;
     }
-
+    
     constructor(
         address _addrSP
     )
@@ -84,7 +90,7 @@ contract XZ21 {
         string memory paramP,
         bytes memory paramG,
         bytes memory paramU
-    ) onlyBy(addrSM) public
+    ) isSM() public
     {
         require(!doneRegisterParam, "Do not overwrite registerParam");
         param.P = paramP;
@@ -97,7 +103,7 @@ contract XZ21 {
         int accountType,
         address addr,
         bytes calldata pubKey
-    ) public onlyBy(addrSM) returns(bool)
+    ) public isSM() returns(bool)
     {
         require(accountType == 0 || accountType == 1, "Invalid account type");
 
@@ -138,7 +144,7 @@ contract XZ21 {
         bytes32 hash,
         uint32 splitNum,
         address owner
-    ) public onlyBy(addrSP) {
+    ) public isSP() {
         require(splitNum > 0, "invalid split num");
 
         fileIndexTable[hash].splitNum = splitNum;
@@ -162,7 +168,7 @@ contract XZ21 {
     function appendOwner(
         bytes32 hash,
         address owner
-    ) public onlyBy(addrSP) {
+    ) public isSP() {
         require(fileIndexTable[hash].splitNum > 0, "invalid file");
 
         userAccountTable[owner].fileList.push(hash);
@@ -171,7 +177,7 @@ contract XZ21 {
     function setChal(
         bytes32 hash,
         bytes calldata chal
-    ) public onlyBySU() {
+    ) public isSU() {
         uint size = auditingLogTable[hash].length;
         if (size > 0) {
             uint pos = size - 1;
@@ -191,7 +197,7 @@ contract XZ21 {
     function setProof(
         bytes32 hash,
         bytes calldata proof
-    ) public onlyBy(addrSP) {
+    ) public isSP() {
         uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing challenge");
         uint pos = size - 1;
@@ -211,7 +217,7 @@ contract XZ21 {
     function setAuditingResult(
         bytes32 hash,
         bool result
-    ) public onlyByTPA() {
+    ) public isTPA() {
         uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing proof");
         uint pos = size - 1;
