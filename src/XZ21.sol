@@ -43,7 +43,7 @@ contract XZ21 {
         Stages stage;
     }
 
-    event EventSetAuditingResult(bytes32 hash, bool result);
+    event EventSetAuditingResult(bytes32 hashVal, bool result);
 
     modifier smOnly() {
         _smOnly();
@@ -101,6 +101,8 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "Only SM may register param"} msg.sender == SM_ADDR;
+    /// #require {:msg "Function can only be called once"} doneRegisterParam == false;
+    /// #if_succeeds {:msg "doneRegisterParam flag must be true after call"} doneRegisterParam == true;
     function registerParam(
         string memory paramP,
         bytes memory paramG,
@@ -166,20 +168,21 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "Only SP may register files"} msg.sender == SP_ADDR;
+    /// #require {:msg "hashVal must be unique"} fileIndexTable[hashVal].splitNum == 0;
     function registerFile(
-        bytes32 hash,
+        bytes32 hashVal,
         uint32 splitNum,
         address owner
     ) public spOnly() {
         require(splitNum > 0, "invalid split num");
 
-        fileIndexTable[hash].splitNum = splitNum;
-        fileIndexTable[hash].creator = owner;
-        userAccountTable[owner].fileList.push(hash);
+        fileIndexTable[hashVal].splitNum = splitNum;
+        fileIndexTable[hashVal].creator = owner;
+        userAccountTable[owner].fileList.push(hashVal);
     }
 
-    function searchFile(bytes32 hash) public view returns(FileProperty memory) {
-        return fileIndexTable[hash];
+    function searchFile(bytes32 hashVal) public view returns(FileProperty memory) {
+        return fileIndexTable[hashVal];
     }
 
     function getFileList(address owner) public view returns(bytes32[] memory) {
@@ -193,23 +196,23 @@ contract XZ21 {
 
     /// #if_succeeds {:msg "Only SP may append owners"} msg.sender == SP_ADDR;
     function appendOwner(
-        bytes32 hash,
+        bytes32 hashVal,
         address owner
     ) public spOnly() {
-        require(fileIndexTable[hash].splitNum > 0, "invalid file");
+        require(fileIndexTable[hashVal].splitNum > 0, "invalid file");
 
-        userAccountTable[owner].fileList.push(hash);
+        userAccountTable[owner].fileList.push(hashVal);
     }
 
     /// #if_succeeds {:msg "Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
     function setChal(
-        bytes32 hash,
+        bytes32 hashVal,
         bytes calldata chal
     ) public suOnly() {
-        uint size = auditingLogTable[hash].length;
+        uint size = auditingLogTable[hashVal].length;
         if (size > 0) {
             uint pos = size - 1;
-            require(auditingLogTable[hash][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
+            require(auditingLogTable[hashVal][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
         }
 
         AuditingLog memory log = AuditingLog({
@@ -219,54 +222,54 @@ contract XZ21 {
             date: 0,
             stage: Stages.WaitingProof
         });
-        auditingLogTable[hash].push(log);
+        auditingLogTable[hashVal].push(log);
     }
 
     /// #if_succeeds {:msg "Only SP may set proof"} msg.sender == SP_ADDR;
     function setProof(
-        bytes32 hash,
+        bytes32 hashVal,
         bytes calldata proof
     ) public spOnly() {
-        uint size = auditingLogTable[hash].length;
+        uint size = auditingLogTable[hashVal].length;
         require(size > 0, "Missing challenge");
         uint pos = size - 1;
-        require(auditingLogTable[hash][pos].stage == Stages.WaitingProof, "Not WaitingProof");
+        require(auditingLogTable[hashVal][pos].stage == Stages.WaitingProof, "Not WaitingProof");
 
-        auditingLogTable[hash][pos].proof = proof;
-        auditingLogTable[hash][pos].stage = Stages.WaitingResult;
+        auditingLogTable[hashVal][pos].proof = proof;
+        auditingLogTable[hashVal][pos].stage = Stages.WaitingResult;
     }
 
-    function getLatestAuditingLog(bytes32 hash) public view returns(AuditingLog memory) {
-        uint size = auditingLogTable[hash].length;
+    function getLatestAuditingLog(bytes32 hashVal) public view returns(AuditingLog memory) {
+        uint size = auditingLogTable[hashVal].length;
         require(size > 0, "No data");
         uint pos = size - 1;
-        return auditingLogTable[hash][pos];
+        return auditingLogTable[hashVal][pos];
     }
 
     /// #if_succeeds {:msg "Only TPA may set auditing result"} isAuditor(msg.sender);
     function setAuditingResult(
-        bytes32 hash,
+        bytes32 hashVal,
         bool result
     ) public tpaOnly() {
-        uint size = auditingLogTable[hash].length;
+        uint size = auditingLogTable[hashVal].length;
         require(size > 0, "Missing proof");
         uint pos = size - 1;
-        require(auditingLogTable[hash][pos].stage == Stages.WaitingResult, "Not WaitingResult");
+        require(auditingLogTable[hashVal][pos].stage == Stages.WaitingResult, "Not WaitingResult");
 
         if (pos > 0) {
             uint tail = pos - 1;
-            require(auditingLogTable[hash][tail].date < block.timestamp, "timestamp error");
+            require(auditingLogTable[hashVal][tail].date < block.timestamp, "timestamp error");
         }
 
-        auditingLogTable[hash][pos].result = result;
-        auditingLogTable[hash][pos].date = block.timestamp;
-        auditingLogTable[hash][pos].stage = Stages.DoneAuditing;
+        auditingLogTable[hashVal][pos].result = result;
+        auditingLogTable[hashVal][pos].date = block.timestamp;
+        auditingLogTable[hashVal][pos].stage = Stages.DoneAuditing;
 
-        emit EventSetAuditingResult(hash, result);
+        emit EventSetAuditingResult(hashVal, result);
     }
 
-    function getAuditingLogs(bytes32 hash) public view returns(AuditingLog[] memory) {
-        return auditingLogTable[hash];
+    function getAuditingLogs(bytes32 hashVal) public view returns(AuditingLog[] memory) {
+        return auditingLogTable[hashVal];
     }
 
     function _auditorContains(address addr) internal view returns(bool) {

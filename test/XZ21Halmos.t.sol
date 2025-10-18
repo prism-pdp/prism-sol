@@ -21,18 +21,9 @@ contract XZ21HalmosSpec is Test {
     function setUp() public virtual {
         vm.prank(ADDR_SM);
         c = new XZ21(ADDR_SP);
+   }
 
-        vm.prank(ADDR_SM);
-        c.registerParam(P, G, U);
-
-        vm.prank(ADDR_SM);
-        c.enrollAccount(0, ADDR_TPA, "");
-
-        vm.prank(ADDR_SM);
-        c.enrollAccount(1, ADDR_USER, KEY_USER);
-    }
-
-    function check_RegisterParam(
+    function check_SystemManagerCanRegisterParam(
         address caller,
         string calldata paramP,
         bytes calldata paramG,
@@ -46,12 +37,9 @@ contract XZ21HalmosSpec is Test {
         c.registerParam(paramP, paramG, paramU);
     }
 
-    // ============================================================
-    //  アクセス制御: 非SM は enrollAccount を成功させてはならない
-    // ============================================================
-    function check_SystemManagerCanEnroll(
-        int accountType,
+    function check_SystemManagerCanEnrollAccount(
         address caller,
+        int accountType,
         address addr,
         bytes calldata pubKey
     ) public {
@@ -61,5 +49,49 @@ contract XZ21HalmosSpec is Test {
 
         vm.prank(caller);
         c.enrollAccount(accountType, addr, pubKey);
+    }
+
+    function check_ServiceProviderCanRegisterFile(
+        address caller,
+        bytes32 hashVal,
+        uint32 splitNum,
+        address owner
+    ) public {
+        vm.assume(
+            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
+        );
+
+        vm.prank(caller);
+        c.registerFile(hashVal, splitNum, owner);
+    }
+
+    //function check_ServiceProviderCannotRegisterDuplicateFile(
+    //    address caller,
+    //    bytes32 hashVal,
+    //    uint32 splitNum,
+    //    address owner
+    //) public {
+    //    vm.assume(caller == ADDR_SP);
+
+    //    vm.prank(caller);
+    //    c.registerFile(hashVal, splitNum, owner);
+    //    vm.prank(caller);
+    //    c.registerFile(hashVal, splitNum, owner);
+    //}
+
+    function check_ServiceProviderCanAppendOwner(
+        address caller,
+        bytes32 hashVal,
+        address owner
+    ) public {
+        vm.assume(
+            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
+        );
+
+        vm.prank(ADDR_SP);
+        c.registerFile(hashVal, 10, ADDR_USER);
+
+        vm.prank(caller);
+        c.appendOwner(hashVal, owner);
     }
 }
