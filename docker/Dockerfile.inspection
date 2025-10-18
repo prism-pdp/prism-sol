@@ -1,0 +1,50 @@
+FROM python:3.11-slim
+
+# 必要なシステムパッケージのインストール
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Halmosのインストール
+RUN pip install --no-cache-dir halmos
+
+# Z3ソルバーのインストール（オプションだが推奨）
+RUN pip install --no-cache-dir z3-solver
+
+# Foundryのインストール
+ENV FOUNDRY_DIR=/opt/foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+ENV PATH="/opt/foundry/bin:${PATH}"
+
+# Foundryのバージョンを指定（ビルド時に変更可能）
+ARG FOUNDRY_VERSION=1.4.1
+RUN foundryup --install ${FOUNDRY_VERSION}
+
+# Scribble
+# Node.jsとnpmのインストール
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash inspector
+
+ENV NPM_CONFIG_PREFIX=/home/inspector/.npm-global
+ENV PATH=/home/inspector/.npm-global/bin:$PATH
+ENV SOLC_TYPED_AST_CACHE_PATH=/home/inspector/.cache/solc-typed-ast
+
+USER inspector
+WORKDIR /workspace
+
+RUN npm install --save-dev eth-scribble
+
+# 作業ディレクトリの設定
+COPY lib  /workspace/lib
+COPY src  /workspace/src
+COPY test /workspace/test
+
+COPY --chown=inspector:inspector docker/inspection/scripts/run-scribble.sh /usr/local/bin/run-scribble.sh
+COPY --chown=inspector:inspector docker/inspection/scripts/run-halmos.sh   /usr/local/bin/run-halmos.sh
+
+CMD ["/bin/bash"]

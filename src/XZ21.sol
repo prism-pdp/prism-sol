@@ -5,8 +5,8 @@ contract XZ21 {
     Param param;
     bool doneRegisterParam;
 
-    address public immutable addrSM;
-    address public immutable addrSP;
+    address public immutable SM_ADDR;
+    address public immutable SP_ADDR;
     address[] public auditorAddrList;
 
     mapping(address => Account) private userAccountTable;
@@ -45,52 +45,67 @@ contract XZ21 {
 
     event EventSetAuditingResult(bytes32 hash, bool result);
 
-    modifier isSM()
-    {
-        require(addrSM == msg.sender, "Authentication error (Only by SM)");
+    modifier smOnly() {
+        _smOnly();
         _;
     }
 
-    modifier isSP()
-    {
-        require(addrSP == msg.sender, "Authentication error (Only by SP)");
+    function _smOnly() internal view {
+        require(SM_ADDR == msg.sender, "Authentication error (Only by SM)");
+    }
+
+    modifier spOnly() {
+        _spOnly();
         _;
     }
 
-    modifier isSU()
-    {
-        require(userAccountTable[msg.sender].pubKey.length > 0, "Authentiction error (Only by SU)");
+    function _spOnly() internal view {
+        require(SP_ADDR == msg.sender, "Authentication error (Only by SP)");
+    }
+
+    modifier suOnly() {
+        _suOnly();
         _;
     }
 
-    modifier isTPA()
-    {
-        bool found = false;
+    function _suOnly() internal view {
+        require(userAccountTable[msg.sender].pubKey.length > 0, "Authentication error (Only by SU)");
+    }
+
+    modifier tpaOnly() {
+        _tpaOnly();
+        _;
+    }
+
+    function _tpaOnly() internal view {
+        require(isAuditor(msg.sender), "Authentication error (Only by TPA)");
+    }
+
+    function isAuditor(address addr) public view returns(bool) {
         for (uint i = 0; i < auditorAddrList.length; i++) {
-            if (auditorAddrList[i] == msg.sender) {
-                found = true;
-                break;
+            if (auditorAddrList[i] == addr) {
+                return true;
             }
         }
-        require(found, "Authentication error (Only by TPA)");
-        _;
+        return false;
     }
-    
+   
     constructor(
-        address _addrSP
+        address _spAddr
     )
     {
-        require(_addrSP != address(0), "addrSP is zero");
-        addrSM = msg.sender;
-        addrSP = _addrSP;
+        require(_spAddr != address(0), "SP_ADDR is zero");
+        SM_ADDR = msg.sender;
+        SP_ADDR = _spAddr;
         doneRegisterParam = false;
     }
 
+    /// #if_succeeds {:msg "Only SM may register param"} msg.sender == SM_ADDR;
     function registerParam(
         string memory paramP,
         bytes memory paramG,
         bytes memory paramU
-    ) isSM() public
+    ) smOnly() public
     {
         require(!doneRegisterParam, "Do not overwrite registerParam");
         param.P = paramP;
@@ -99,11 +114,18 @@ contract XZ21 {
         doneRegisterParam = true;
     }
 
+    /// #if_succeeds {:msg "Only SM may enroll"} msg.sender == SM_ADDR;
+    /// #if_succeeds {:msg "No duplicate address"} (
+    ///     (accountType == 0) ==> !old(_auditorContains(addr))
+    /// );
+    /// #if_succeeds {:msg "Account type must be valid"} (
+    ///     accountType == 0 || accountType == 1
+    /// );
     function enrollAccount(
         int accountType,
         address addr,
         bytes calldata pubKey
-    ) public isSM() returns(bool)
+    ) public smOnly() returns(bool)
     {
         require(accountType == 0 || accountType == 1, "Invalid account type");
 
@@ -120,7 +142,10 @@ contract XZ21 {
             auditorAddrList.push(addr);
         } else {
             require(userAccountTable[addr].pubKey.length == 0, "Duplicate SU account");
-            userAccountTable[addr] = Account(pubKey, new bytes32[](0));
+            userAccountTable[addr] = Account({
+                pubKey: pubKey,
+                fileList: new bytes32[](0)
+            });
         }
 
         return true;
@@ -140,11 +165,12 @@ contract XZ21 {
         return param;
     }
 
+    /// #if_succeeds {:msg "Only SP may register files"} msg.sender == SP_ADDR;
     function registerFile(
         bytes32 hash,
         uint32 splitNum,
         address owner
-    ) public isSP() {
+    ) public spOnly() {
         require(splitNum > 0, "invalid split num");
 
         fileIndexTable[hash].splitNum = splitNum;
@@ -165,39 +191,42 @@ contract XZ21 {
         return fileList;
     }
 
+    /// #if_succeeds {:msg "Only SP may append owners"} msg.sender == SP_ADDR;
     function appendOwner(
         bytes32 hash,
         address owner
-    ) public isSP() {
+    ) public spOnly() {
         require(fileIndexTable[hash].splitNum > 0, "invalid file");
 
         userAccountTable[owner].fileList.push(hash);
     }
 
+    /// #if_succeeds {:msg "Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
     function setChal(
         bytes32 hash,
         bytes calldata chal
-    ) public isSU() {
+    ) public suOnly() {
         uint size = auditingLogTable[hash].length;
         if (size > 0) {
             uint pos = size - 1;
             require(auditingLogTable[hash][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
         }
 
-        AuditingLog memory log = AuditingLog(
-            chal,
-            "",
-            false,
-            0,
-            Stages.WaitingProof
-        );
+        AuditingLog memory log = AuditingLog({
+            chal: chal,
+            proof: "",
+            result: false,
+            date: 0,
+            stage: Stages.WaitingProof
+        });
         auditingLogTable[hash].push(log);
     }
 
+    /// #if_succeeds {:msg "Only SP may set proof"} msg.sender == SP_ADDR;
     function setProof(
         bytes32 hash,
         bytes calldata proof
-    ) public isSP() {
+    ) public spOnly() {
         uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing challenge");
         uint pos = size - 1;
@@ -214,10 +243,11 @@ contract XZ21 {
         return auditingLogTable[hash][pos];
     }
 
+    /// #if_succeeds {:msg "Only TPA may set auditing result"} isAuditor(msg.sender);
     function setAuditingResult(
         bytes32 hash,
         bool result
-    ) public isTPA() {
+    ) public tpaOnly() {
         uint size = auditingLogTable[hash].length;
         require(size > 0, "Missing proof");
         uint pos = size - 1;
@@ -237,5 +267,14 @@ contract XZ21 {
 
     function getAuditingLogs(bytes32 hash) public view returns(AuditingLog[] memory) {
         return auditingLogTable[hash];
+    }
+
+    function _auditorContains(address addr) internal view returns(bool) {
+        for (uint i = 0; i < auditorAddrList.length; i++) {
+            if (auditorAddrList[i] == addr) {
+                return true;
+            }
+        }
+        return false;
     }
 }
