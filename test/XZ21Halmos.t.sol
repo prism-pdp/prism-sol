@@ -11,8 +11,6 @@ contract XZ21HalmosSpec is Test {
 
     address constant ADDR_SM = address(0x1000);
     address constant ADDR_SP = address(0x2000);
-    address constant ADDR_TPA = address(0x3000);
-    address constant ADDR_USER = address(0x4000);
 
     bytes constant KEY_USER = "0x4000";
 
@@ -80,18 +78,23 @@ contract XZ21HalmosSpec is Test {
     }
 
     function check_ServiceUserCanSetChal(
-        address caller,
+        address spAddr,
+        address suAddr,
         bytes calldata pubKey,
         bytes32 hashVal,
-        bytes calldata chal
+        bytes calldata chal,
+        bytes calldata proof
     ) public {
         vm.prank(ADDR_SM);
-        c.enrollAccount(1, caller, pubKey);
+        c.enrollAccount(1, suAddr, pubKey);
 
-        vm.prank(ADDR_SP);
-        c.registerFile(hashVal, 10, ADDR_SP);
+        vm.prank(spAddr);
+        c.registerFile(hashVal, 10, spAddr);
 
-        vm.prank(caller);
+        vm.prank(suAddr);
         c.setChal(hashVal, chal);
+
+        vm.prank(spAddr);
+        c.setProof(hashVal, proof);
     }
 }

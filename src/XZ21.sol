@@ -226,6 +226,8 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "Only SP may set proof"} msg.sender == SP_ADDR;
+    /// #require {:msg "challenge must be set"} auditingLogTable[hashVal].length > 0;
+    /// #require {:msg "Stage must be WaitingProof"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingProof;
     function setProof(
         bytes32 hashVal,
         bytes calldata proof
