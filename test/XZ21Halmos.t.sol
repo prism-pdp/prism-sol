@@ -29,10 +29,6 @@ contract XZ21HalmosSpec is Test {
         bytes calldata paramG,
         bytes calldata paramU
     ) public {
-        vm.assume(
-            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
-        );
-
         vm.prank(caller);
         c.registerParam(paramP, paramG, paramU);
     }
@@ -43,10 +39,6 @@ contract XZ21HalmosSpec is Test {
         address addr,
         bytes calldata pubKey
     ) public {
-        vm.assume(
-            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
-        );
-
         vm.prank(caller);
         c.enrollAccount(accountType, addr, pubKey);
     }
@@ -57,10 +49,6 @@ contract XZ21HalmosSpec is Test {
         uint32 splitNum,
         address owner
     ) public {
-        vm.assume(
-            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
-        );
-
         vm.prank(caller);
         c.registerFile(hashVal, splitNum, owner);
     }
@@ -84,14 +72,26 @@ contract XZ21HalmosSpec is Test {
         bytes32 hashVal,
         address owner
     ) public {
-        vm.assume(
-            caller == ADDR_SM || caller == ADDR_SP || caller == ADDR_TPA || caller == ADDR_USER
-        );
-
         vm.prank(ADDR_SP);
-        c.registerFile(hashVal, 10, ADDR_USER);
+        c.registerFile(hashVal, 10, owner);
 
         vm.prank(caller);
         c.appendOwner(hashVal, owner);
+    }
+
+    function check_ServiceUserCanSetChal(
+        address caller,
+        bytes calldata pubKey,
+        bytes32 hashVal,
+        bytes calldata chal
+    ) public {
+        vm.prank(ADDR_SM);
+        c.enrollAccount(1, caller, pubKey);
+
+        vm.prank(ADDR_SP);
+        c.registerFile(hashVal, 10, ADDR_SP);
+
+        vm.prank(caller);
+        c.setChal(hashVal, chal);
     }
 }
