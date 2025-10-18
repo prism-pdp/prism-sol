@@ -77,14 +77,19 @@ contract XZ21HalmosSpec is Test {
         c.appendOwner(hashVal, owner);
     }
 
-    function check_ServiceUserCanSetChal(
+    function check_Auditing(
         address spAddr,
         address suAddr,
+        address tpaAddr,
         bytes calldata pubKey,
         bytes32 hashVal,
         bytes calldata chal,
-        bytes calldata proof
+        bytes calldata proof,
+        bool result
     ) public {
+        vm.prank(ADDR_SM);
+        c.enrollAccount(0, tpaAddr, "");
+
         vm.prank(ADDR_SM);
         c.enrollAccount(1, suAddr, pubKey);
 
@@ -96,5 +101,8 @@ contract XZ21HalmosSpec is Test {
 
         vm.prank(spAddr);
         c.setProof(hashVal, proof);
+
+        vm.prank(tpaAddr);
+        c.setAuditingResult(hashVal, result);
     }
 }
