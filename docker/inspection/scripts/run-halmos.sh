@@ -1,3 +1,3 @@
 #!/bin/sh
 
-halmos --match-test '^check_.*' --solver z3
+halmos --match-test '^test_.*' --solver z3
