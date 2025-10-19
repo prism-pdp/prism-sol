@@ -251,6 +251,7 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "Only TPA may set auditing result"} isAuditor(msg.sender);
+    /// #if_succeeds {:msg "XXX"} auditingLogTable[hashVal].length > 1 ==> auditingLogTable[hashVal][auditingLogTable[hashVal].length - 2].date < block.timestamp;
     function setAuditingResult(
         bytes32 hashVal,
         bool result
