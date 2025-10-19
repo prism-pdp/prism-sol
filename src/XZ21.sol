@@ -168,13 +168,15 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "Only SP may register files"} msg.sender == SP_ADDR;
-    /// #require {:msg "hashVal must be unique"} fileIndexTable[hashVal].splitNum == 0;
+    /// #if_succeeds {:msg "XXX"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
+    /// #if_succeeds {:msg "XXX"} old(fileIndexTable[hashVal].splitNum) == 0 ==> splitNum == fileIndexTable[hashVal].splitNum;
     function registerFile(
         bytes32 hashVal,
         uint32 splitNum,
         address owner
     ) public spOnly() {
         require(splitNum > 0, "invalid split num");
+        require(fileIndexTable[hashVal].creator == address(0));
 
         fileIndexTable[hashVal].splitNum = splitNum;
         fileIndexTable[hashVal].creator = owner;
