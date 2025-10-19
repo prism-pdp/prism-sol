@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "./Base_XZ21_Setup.t.sol";
 
 contract G4_Freshness_XZ21 is Base_XZ21_Setup {
-    function test_G4_AuditingLogsOrder (
+    function check_G4_AuditingLogsOrder (
         bytes32 hashVal,
         uint256 time1,
         uint256 time2

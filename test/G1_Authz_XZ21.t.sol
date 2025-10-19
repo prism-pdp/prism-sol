@@ -5,7 +5,7 @@ import "./Base_XZ21_Setup.t.sol";
 
 contract G1_Authz_XZ21 is Base_XZ21_Setup {
 
-    function test_G1_registerParam_onlySM(
+    function check_G1_registerParam_onlySM(
         address caller
     ) public {
         vm.assume(caller != SM_ADDR);
@@ -23,7 +23,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         }
     }
 
-    function test_G1_enrollAccount_onlySM(
+    function check_G1_enrollAccount_onlySM(
         address caller,
         int accountType,
         address enrollAddr
@@ -37,7 +37,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         } catch {}
     }
 
-    function test_G1_registerFile_onlySP(address caller) public {
+    function check_G1_registerFile_onlySP(address caller) public {
         vm.assume(caller != SP_ADDR);
 
         vm.prank(caller);
@@ -46,7 +46,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         } catch {}
     }
 
-    function test_G1_appendOwner_onlySP(address caller) public {
+    function check_G1_appendOwner_onlySP(address caller) public {
         vm.assume(caller != SP_ADDR);
 
         vm.prank(caller);
@@ -55,7 +55,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         } catch {}
     }
 
-    function test_G1_setChal_onlySU(address caller) public {
+    function check_G1_setChal_onlySU(address caller) public {
         vm.assume(caller != SU_ADDR);
 
         vm.prank(caller);
@@ -64,7 +64,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         } catch {}
     }
 
-    function test_G1_setProof_onlySP(address caller) public {
+    function check_G1_setProof_onlySP(address caller) public {
         vm.assume(caller != SP_ADDR);
         bytes32 hashVal = keccak256("file");
 
@@ -78,7 +78,7 @@ contract G1_Authz_XZ21 is Base_XZ21_Setup {
         } catch {}
     }
 
-    function test_G1_setAuditingResult_onlyTPA(address caller) public {
+    function check_G1_setAuditingResult_onlyTPA(address caller) public {
         vm.assume(caller != TPA_ADDR);
         bytes32 hashVal = keccak256("file");
 
