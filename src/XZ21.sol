@@ -100,9 +100,8 @@ contract XZ21 {
         doneRegisterParam = false;
     }
 
-    /// #if_succeeds {:msg "Only SM may register param"} msg.sender == SM_ADDR;
-    /// #require {:msg "Function can only be called once"} doneRegisterParam == false;
-    /// #if_succeeds {:msg "doneRegisterParam flag must be true after call"} doneRegisterParam == true;
+    /// #if_succeeds {:msg "G1: Only SM may register param"} msg.sender == SM_ADDR;
+    /// #if_succeeds {:msg "G2: doneRegisterParam can be call only once"} old(doneRegisterParam) == false && doneRegisterParam == true;
     function registerParam(
         string memory paramP,
         bytes memory paramG,
@@ -116,12 +115,9 @@ contract XZ21 {
         doneRegisterParam = true;
     }
 
-    /// #if_succeeds {:msg "Only SM may enroll"} msg.sender == SM_ADDR;
-    /// #if_succeeds {:msg "No duplicate address"} (
+    /// #if_succeeds {:msg "G1: Only SM may enroll account"} msg.sender == SM_ADDR;
+    /// #if_succeeds {:msg "G3: No duplicate address"} (
     ///     (accountType == 0) ==> !old(_auditorContains(addr))
-    /// );
-    /// #if_succeeds {:msg "Account type must be valid"} (
-    ///     accountType == 0 || accountType == 1
     /// );
     function enrollAccount(
         int accountType,
@@ -167,9 +163,9 @@ contract XZ21 {
         return param;
     }
 
-    /// #if_succeeds {:msg "Only SP may register files"} msg.sender == SP_ADDR;
-    /// #if_succeeds {:msg "XXX"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
-    /// #if_succeeds {:msg "XXX"} old(fileIndexTable[hashVal].splitNum) == 0 ==> splitNum == fileIndexTable[hashVal].splitNum;
+    /// #if_succeeds {:msg "G1: Only SP may register files"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
+    /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].splitNum) == 0 ==> splitNum == fileIndexTable[hashVal].splitNum;
     function registerFile(
         bytes32 hashVal,
         uint32 splitNum,
@@ -196,7 +192,7 @@ contract XZ21 {
         return fileList;
     }
 
-    /// #if_succeeds {:msg "Only SP may append owners"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G1: Only SP may append owners"} msg.sender == SP_ADDR;
     function appendOwner(
         bytes32 hashVal,
         address owner
@@ -206,7 +202,8 @@ contract XZ21 {
         userAccountTable[owner].fileList.push(hashVal);
     }
 
-    /// #if_succeeds {:msg "Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
+    /// #if_succeeds {:msg "G1: Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
+    /// #if_succeeds {:msg "G5: Stage must be WaitingProof"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingProof;
     function setChal(
         bytes32 hashVal,
         bytes calldata chal
@@ -227,9 +224,9 @@ contract XZ21 {
         auditingLogTable[hashVal].push(log);
     }
 
-    /// #if_succeeds {:msg "Only SP may set proof"} msg.sender == SP_ADDR;
-    /// #require {:msg "challenge must be set"} auditingLogTable[hashVal].length > 0;
-    /// #require {:msg "Stage must be WaitingProof"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingProof;
+    /// #if_succeeds {:msg "G1: Only SP may set proof"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G5: Stage must have been WaitingProof"} old(auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage) == Stages.WaitingProof;
+    /// #if_succeeds {:msg "G5: Stage must be WaitingResult"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingResult;
     function setProof(
         bytes32 hashVal,
         bytes calldata proof
@@ -250,8 +247,10 @@ contract XZ21 {
         return auditingLogTable[hashVal][pos];
     }
 
-    /// #if_succeeds {:msg "Only TPA may set auditing result"} isAuditor(msg.sender);
-    /// #if_succeeds {:msg "XXX"} auditingLogTable[hashVal].length > 1 ==> auditingLogTable[hashVal][auditingLogTable[hashVal].length - 2].date < block.timestamp;
+    /// #if_succeeds {:msg "G1: Only TPA may set auditing result"} isAuditor(msg.sender);
+    /// #if_succeeds {:msg "G4: XXX"} auditingLogTable[hashVal].length > 1 ==> auditingLogTable[hashVal][auditingLogTable[hashVal].length - 2].date < block.timestamp;
+    /// #if_succeeds {:msg "G5: Stage must have been WaitingResult"} old(auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage) == Stages.WaitingResult;
+    /// #if_succeeds {:msg "G5: Stage must be DoneAuditing now"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.DoneAuditing;
     function setAuditingResult(
         bytes32 hashVal,
         bool result
