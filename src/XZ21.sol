@@ -5,8 +5,8 @@ contract XZ21 {
     Param param;
     bool doneRegisterParam;
 
-    address public immutable SM_ADDR;
-    address public immutable SP_ADDR;
+    address public immutable smAddr;
+    address public immutable spAddr;
     address[] public auditorAddrList;
 
     mapping(address => Account) private userAccountTable;
@@ -51,7 +51,7 @@ contract XZ21 {
     }
 
     function _smOnly() internal view {
-        require(SM_ADDR == msg.sender, "Authentication error (Only by SM)");
+        require(smAddr == msg.sender, "Authentication error (Only by SM)");
     }
 
     modifier spOnly() {
@@ -60,7 +60,7 @@ contract XZ21 {
     }
 
     function _spOnly() internal view {
-        require(SP_ADDR == msg.sender, "Authentication error (Only by SP)");
+        require(spAddr == msg.sender, "Authentication error (Only by SP)");
     }
 
     modifier suOnly() {
@@ -82,7 +82,8 @@ contract XZ21 {
     }
 
     function isAuditor(address addr) public view returns(bool) {
-        for (uint i = 0; i < auditorAddrList.length; i++) {
+        uint len = auditorAddrList.length;
+        for (uint i = 0; i < len; i++) {
             if (auditorAddrList[i] == addr) {
                 return true;
             }
@@ -94,13 +95,13 @@ contract XZ21 {
         address _spAddr
     )
     {
-        require(_spAddr != address(0), "SP_ADDR is zero");
-        SM_ADDR = msg.sender;
-        SP_ADDR = _spAddr;
+        require(_spAddr != address(0), "spAddr is zero");
+        smAddr = msg.sender;
+        spAddr = _spAddr;
         doneRegisterParam = false;
     }
 
-    /// #if_succeeds {:msg "G1: Only SM may register param"} msg.sender == SM_ADDR;
+    /// #if_succeeds {:msg "G1: Only SM may register param"} msg.sender == smAddr;
     /// #if_succeeds {:msg "G2: doneRegisterParam can be call only once"} old(doneRegisterParam) == false && doneRegisterParam == true;
     function registerParam(
         string memory paramP,
@@ -115,7 +116,7 @@ contract XZ21 {
         doneRegisterParam = true;
     }
 
-    /// #if_succeeds {:msg "G1: Only SM may enroll account"} msg.sender == SM_ADDR;
+    /// #if_succeeds {:msg "G1: Only SM may enroll account"} msg.sender == smAddr;
     /// #if_succeeds {:msg "G3: No duplicate address"} (
     ///     (accountType == 0) ==> !old(_auditorContains(addr))
     /// );
@@ -128,15 +129,7 @@ contract XZ21 {
         require(accountType == 0 || accountType == 1, "Invalid account type");
 
         if (accountType == 0) {
-            bool found = false;
-            uint len = auditorAddrList.length;
-            for (uint i = 0; i < len; i++) {
-                if (auditorAddrList[i] == addr) {
-                    found = true;
-                    break;
-                }
-            }
-            require(!found, "Duplicate TPA address");
+            require(!_auditorContains(addr), "Duplicate TPA address");
             auditorAddrList.push(addr);
         } else {
             require(userAccountTable[addr].pubKey.length == 0, "Duplicate SU account");
@@ -163,7 +156,7 @@ contract XZ21 {
         return param;
     }
 
-    /// #if_succeeds {:msg "G1: Only SP may register files"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G1: Only SP may register files"} msg.sender == spAddr;
     /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
     /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].splitNum) == 0 ==> splitNum == fileIndexTable[hashVal].splitNum;
     function registerFile(
@@ -192,7 +185,7 @@ contract XZ21 {
         return fileList;
     }
 
-    /// #if_succeeds {:msg "G1: Only SP may append owners"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G1: Only SP may append owners"} msg.sender == spAddr;
     function appendOwner(
         bytes32 hashVal,
         address owner
@@ -224,7 +217,7 @@ contract XZ21 {
         auditingLogTable[hashVal].push(log);
     }
 
-    /// #if_succeeds {:msg "G1: Only SP may set proof"} msg.sender == SP_ADDR;
+    /// #if_succeeds {:msg "G1: Only SP may set proof"} msg.sender == spAddr;
     /// #if_succeeds {:msg "G5: Stage must have been WaitingProof"} old(auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage) == Stages.WaitingProof;
     /// #if_succeeds {:msg "G5: Stage must be WaitingResult"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingResult;
     function setProof(
@@ -277,7 +270,8 @@ contract XZ21 {
     }
 
     function _auditorContains(address addr) internal view returns(bool) {
-        for (uint i = 0; i < auditorAddrList.length; i++) {
+        uint len = auditorAddrList.length;
+        for (uint i = 0; i < len; i++) {
             if (auditorAddrList[i] == addr) {
                 return true;
             }
