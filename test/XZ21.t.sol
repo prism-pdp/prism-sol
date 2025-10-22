@@ -61,13 +61,13 @@ contract XZ21Test is Test {
     }
 
     function testSetupPhase() public view {
-        assertEq(c.SM_ADDR(), SM_ADDR);
+        assertEq(c.smAddr(), SM_ADDR);
 
         address[] memory tpaAddrList = c.getAuditorAddrList();
         assertEq(tpaAddrList.length, 1);
         assertEq(tpaAddrList[0], TPA_ADDR);
 
-        assertEq(c.SP_ADDR(), SP_ADDR);
+        assertEq(c.spAddr(), SP_ADDR);
 
         XZ21.Param memory param = c.getParam();
         assertEq(param.P, P);
