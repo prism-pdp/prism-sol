@@ -28,6 +28,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
+# Echidna
+ARG ECHIDNA_VERSION=2.2.7
+RUN curl -o /tmp/echidna.tar.gz -L \
+    https://github.com/crytic/echidna/releases/download/v${ECHIDNA_VERSION}/echidna-${ECHIDNA_VERSION}-x86_64-linux.tar.gz && \
+    tar zxvf /tmp/echidna.tar.gz && \
+    mv ./echidna /usr/local/bin && \
+    chmod +x /usr/local/bin/echidna
+RUN pip install \
+    crytic-compile \
+    slither-analyzer
+
 RUN useradd -m -s /bin/bash inspector
 
 ENV NPM_CONFIG_PREFIX=/home/inspector/.npm-global
@@ -46,5 +57,6 @@ COPY test /workspace/test
 
 COPY --chown=inspector:inspector docker/inspection/scripts/run-scribble.sh /usr/local/bin/run-scribble.sh
 COPY --chown=inspector:inspector docker/inspection/scripts/run-halmos.sh   /usr/local/bin/run-halmos.sh
+COPY --chown=inspector:inspector docker/inspection/scripts/run-echidna.sh  /usr/local/bin/run-echidna.sh
 
 CMD ["/bin/bash"]

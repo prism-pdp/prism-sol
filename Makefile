@@ -36,3 +36,34 @@ inspection-sh:
 	docker run -it --rm -v "$(PWD)":/workspace \
 		prism/prism-sol-inspection \
 		bash
+
+inspect-mythril:
+	@date --rfc-3339=seconds
+	@$(MAKE) mythril-cmd CMD="analyze src/XZ21.sol \
+		--solv 0.8.24 \
+		--max-depth 32 --call-depth-limit 5 \
+		--strategy weighted-random -b 3 -t 3 \
+		--execution-timeout 180 --solver-timeout 1500 \
+		--parallel-solving --pruning-factor 0.3 --enable-summaries \
+		--no-onchain-data"
+	@date --rfc-3339=seconds
+
+mythril-sh:
+	$(MAKE) mythril-cmd CMD=bash
+
+mythril-cmd:
+	@docker run -it --rm -v "$(PWD)":/share -w /share \
+		mythril/myth:0.24.8 \
+		$(CMD)
+
+echidna-sh:
+	$(MAKE) echidna-cmd CMD=bash
+
+echidna-cmd:
+	@docker run -it --rm -v "$(PWD)":/share -w /share \
+		--user 1000:1000 \
+		prism/echidna \
+		$(CMD)
+
+echidna-build:
+	docker build -t prism/echidna -f docker/Dockerfile.echidna .

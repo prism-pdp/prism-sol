@@ -1,4 +1,6 @@
 # Compiler files
+corpus-crash
+crytic-export
 cache/*
 out/*
 node_modules/*
@@ -13,5 +15,8 @@ docs/
 
 # Dotenv file
 .env
+
+.scribble-meta.json
+output.json
 
 !.gitkeep

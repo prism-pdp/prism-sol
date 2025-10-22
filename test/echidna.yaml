@@ -1,0 +1,11 @@
+testMode: assertion
+testLimit: 20000
+seqLen: 50
+coverage: true
+timeout: 1800
+deployer: "0x1000" # SM = Deployer
+sender:
+  - "0x1000" # SM
+  - "0x2000" # SP
+  - "0x3000" # TPA
+  - "0x4000" # SU

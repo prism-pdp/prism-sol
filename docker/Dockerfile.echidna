@@ -1,0 +1,20 @@
+FROM ghcr.io/foundry-rs/foundry:v1.4.1
+
+USER root
+
+# 非対話＆タイムゾーン固定（tzdata のプロンプト回避）
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt-get update && apt-get install \
+    ca-certificates \
+    curl
+
+ARG ECHIDNA_VERSION=2.2.7
+RUN curl -o /tmp/echidna.tar.gz -L \
+    https://github.com/crytic/echidna/releases/download/v${ECHIDNA_VERSION}/echidna-${ECHIDNA_VERSION}-x86_64-linux.tar.gz && \
+    tar zxvf /tmp/echidna.tar.gz && \
+    mv ./echidna /usr/local/bin && \
+    chmod +x /usr/local/bin/echidna
+
+USER foundry
