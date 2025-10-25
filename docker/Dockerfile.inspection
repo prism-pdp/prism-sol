@@ -39,24 +39,43 @@ RUN pip install \
     crytic-compile \
     slither-analyzer
 
-RUN useradd -m -s /bin/bash inspector
+# Aderyn
+RUN apt-get update && apt-get install -y pkg-config libssl-dev
 
-ENV NPM_CONFIG_PREFIX=/home/inspector/.npm-global
-ENV PATH=/home/inspector/.npm-global/bin:$PATH
-ENV SOLC_TYPED_AST_CACHE_PATH=/home/inspector/.cache/solc-typed-ast
+ARG USERNAME=inspector
+RUN useradd -m -s /bin/bash ${USERNAME}
 
-USER inspector
+ENV NPM_CONFIG_PREFIX=/home/${USERNAME}/.npm-global
+ENV PATH=/home/${USERNAME}/.npm-global/bin:$PATH
+ENV SOLC_TYPED_AST_CACHE_PATH=/home/${USERNAME}/.cache/solc-typed-ast
+
+USER $USERNAME
 WORKDIR /workspace
 
 RUN npm install --save-dev eth-scribble
+
+# Aderyn
+# Rust toolchainを入れる (foundry公式イメージはUbuntu系なのでapt可)
+ENV PATH="/home/${USERNAME}/.cargo/bin:${PATH}"
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    . ~/.cargo/env && \
+    rustc --version
+
+# ---- 4. Aderyn をビルド ----
+RUN git clone https://github.com/Cyfrin/aderyn.git /home/${USERNAME}/aderyn \
+    && cd /home/${USERNAME}/aderyn \
+    && ~/.cargo/bin/cargo build --release \
+    && install -Dm755 target/release/aderyn /home/${USERNAME}/.local/bin/aderyn
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # 作業ディレクトリの設定
 COPY lib  /workspace/lib
 COPY src  /workspace/src
 COPY test /workspace/test
 
-COPY --chown=inspector:inspector docker/inspection/scripts/run-scribble.sh /usr/local/bin/run-scribble.sh
-COPY --chown=inspector:inspector docker/inspection/scripts/run-halmos.sh   /usr/local/bin/run-halmos.sh
-COPY --chown=inspector:inspector docker/inspection/scripts/run-echidna.sh  /usr/local/bin/run-echidna.sh
+COPY --chown=${USERNAME}:${USERNAME} docker/inspection/scripts/run-scribble.sh /usr/local/bin/run-scribble.sh
+COPY --chown=${USERNAME}:${USERNAME} docker/inspection/scripts/run-halmos.sh   /usr/local/bin/run-halmos.sh
+COPY --chown=${USERNAME}:${USERNAME} docker/inspection/scripts/run-echidna.sh  /usr/local/bin/run-echidna.sh
+COPY --chown=${USERNAME}:${USERNAME} docker/inspection/scripts/run-aderyn.sh   /usr/local/bin/run-aderyn.sh
 
 CMD ["/bin/bash"]
