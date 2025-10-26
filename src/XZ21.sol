@@ -1,5 +1,5 @@
 // SPDX-License-Identofier: UNLICENSED
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 contract XZ21 {
     Param param;
@@ -43,7 +43,13 @@ contract XZ21 {
         Stages stage;
     }
 
-    event EventSetAuditingResult(bytes32 hashVal, bool result);
+    event EventRegisterParam();
+    event EventEnrollAccount(int accountType, address indexed addr);
+    event EventRegisterFile(address indexed owner, bytes32 indexed hashVal, uint32 splitNum);
+    event EventAppendOwner(address indexed owner, bytes32 indexed hashVal);
+    event EventSetChal(bytes32 indexed hashVal);
+    event EventSetProof(bytes32 indexed hashVal);
+    event EventSetAuditingResult(bytes32 indexed hashVal, bool result);
 
     modifier smOnly() {
         _smOnly();
@@ -82,8 +88,8 @@ contract XZ21 {
     }
 
     function isAuditor(address addr) public view returns(bool) {
-        uint len = auditorAddrList.length;
-        for (uint i = 0; i < len; i++) {
+        uint256 len = auditorAddrList.length;
+        for (uint256 i = 0; i < len; i++) {
             if (auditorAddrList[i] == addr) {
                 return true;
             }
@@ -107,13 +113,15 @@ contract XZ21 {
         string memory paramP,
         bytes memory paramG,
         bytes memory paramU
-    ) smOnly() public
+    ) smOnly() external
     {
         require(!doneRegisterParam, "Do not overwrite registerParam");
         param.P = paramP;
         param.U = paramU;
         param.G = paramG;
         doneRegisterParam = true;
+
+        emit EventRegisterParam();
     }
 
     /// #if_succeeds {:msg "G1: Only SM may enroll account"} msg.sender == smAddr;
@@ -124,7 +132,7 @@ contract XZ21 {
         int accountType,
         address addr,
         bytes calldata pubKey
-    ) public smOnly() returns(bool)
+    ) external smOnly() returns(bool)
     {
         require(accountType == 0 || accountType == 1, "Invalid account type");
 
@@ -139,20 +147,22 @@ contract XZ21 {
             });
         }
 
+        emit EventEnrollAccount(accountType, addr);
+
         return true;
     }
 
     function getUserAccount(
         address addr
-    ) public view returns(Account memory) {
+    ) external view returns(Account memory) {
         return userAccountTable[addr];
     }
 
-    function getAuditorAddrList() public view returns(address[] memory) {
+    function getAuditorAddrList() external view returns(address[] memory) {
         return auditorAddrList;
     }
 
-    function getParam() public view returns(Param memory) {
+    function getParam() external view returns(Param memory) {
         return param;
     }
 
@@ -163,23 +173,25 @@ contract XZ21 {
         bytes32 hashVal,
         uint32 splitNum,
         address owner
-    ) public spOnly() {
+    ) external spOnly() {
         require(splitNum > 0, "invalid split num");
-        require(fileIndexTable[hashVal].creator == address(0));
+        require(fileIndexTable[hashVal].creator == address(0), "Duplicate registration");
 
         fileIndexTable[hashVal].splitNum = splitNum;
         fileIndexTable[hashVal].creator = owner;
         userAccountTable[owner].fileList.push(hashVal);
+
+        emit EventRegisterFile(owner, hashVal, splitNum);
     }
 
-    function searchFile(bytes32 hashVal) public view returns(FileProperty memory) {
+    function searchFile(bytes32 hashVal) external view returns(FileProperty memory) {
         return fileIndexTable[hashVal];
     }
 
-    function getFileList(address owner) public view returns(bytes32[] memory) {
-        uint fileListLength = userAccountTable[owner].fileList.length;
+    function getFileList(address owner) external view returns(bytes32[] memory) {
+        uint256 fileListLength = userAccountTable[owner].fileList.length;
         bytes32[] memory fileList = new bytes32[](fileListLength);
-        for(uint i = 0; i < userAccountTable[owner].fileList.length; i++) {
+        for(uint256 i = 0; i < userAccountTable[owner].fileList.length; i++) {
             fileList[i] = userAccountTable[owner].fileList[i];
         }
         return fileList;
@@ -189,10 +201,12 @@ contract XZ21 {
     function appendOwner(
         bytes32 hashVal,
         address owner
-    ) public spOnly() {
+    ) external spOnly() {
         require(fileIndexTable[hashVal].splitNum > 0, "invalid file");
 
         userAccountTable[owner].fileList.push(hashVal);
+
+        emit EventAppendOwner(owner, hashVal);
     }
 
     /// #if_succeeds {:msg "G1: Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
@@ -200,10 +214,10 @@ contract XZ21 {
     function setChal(
         bytes32 hashVal,
         bytes calldata chal
-    ) public suOnly() {
-        uint size = auditingLogTable[hashVal].length;
+    ) external suOnly() {
+        uint256 size = auditingLogTable[hashVal].length;
         if (size > 0) {
-            uint pos = size - 1;
+            uint256 pos = size - 1;
             require(auditingLogTable[hashVal][pos].stage == Stages.DoneAuditing, "Not WaitingChal");
         }
 
@@ -215,6 +229,8 @@ contract XZ21 {
             stage: Stages.WaitingProof
         });
         auditingLogTable[hashVal].push(log);
+
+        emit EventSetChal(hashVal);
     }
 
     /// #if_succeeds {:msg "G1: Only SP may set proof"} msg.sender == spAddr;
@@ -223,20 +239,22 @@ contract XZ21 {
     function setProof(
         bytes32 hashVal,
         bytes calldata proof
-    ) public spOnly() {
-        uint size = auditingLogTable[hashVal].length;
+    ) external spOnly() {
+        uint256 size = auditingLogTable[hashVal].length;
         require(size > 0, "Missing challenge");
-        uint pos = size - 1;
+        uint256 pos = size - 1;
         require(auditingLogTable[hashVal][pos].stage == Stages.WaitingProof, "Not WaitingProof");
 
         auditingLogTable[hashVal][pos].proof = proof;
         auditingLogTable[hashVal][pos].stage = Stages.WaitingResult;
+
+        emit EventSetProof(hashVal);
     }
 
-    function getLatestAuditingLog(bytes32 hashVal) public view returns(AuditingLog memory) {
-        uint size = auditingLogTable[hashVal].length;
+    function getLatestAuditingLog(bytes32 hashVal) external view returns(AuditingLog memory) {
+        uint256 size = auditingLogTable[hashVal].length;
         require(size > 0, "No data");
-        uint pos = size - 1;
+        uint256 pos = size - 1;
         return auditingLogTable[hashVal][pos];
     }
 
@@ -247,14 +265,14 @@ contract XZ21 {
     function setAuditingResult(
         bytes32 hashVal,
         bool result
-    ) public tpaOnly() {
-        uint size = auditingLogTable[hashVal].length;
+    ) external tpaOnly() {
+        uint256 size = auditingLogTable[hashVal].length;
         require(size > 0, "Missing proof");
-        uint pos = size - 1;
+        uint256 pos = size - 1;
         require(auditingLogTable[hashVal][pos].stage == Stages.WaitingResult, "Not WaitingResult");
 
         if (pos > 0) {
-            uint tail = pos - 1;
+            uint256 tail = pos - 1;
             require(auditingLogTable[hashVal][tail].date < block.timestamp, "timestamp error");
         }
 
@@ -265,13 +283,13 @@ contract XZ21 {
         emit EventSetAuditingResult(hashVal, result);
     }
 
-    function getAuditingLogs(bytes32 hashVal) public view returns(AuditingLog[] memory) {
+    function getAuditingLogs(bytes32 hashVal) external view returns(AuditingLog[] memory) {
         return auditingLogTable[hashVal];
     }
 
     function _auditorContains(address addr) internal view returns(bool) {
-        uint len = auditorAddrList.length;
-        for (uint i = 0; i < len; i++) {
+        uint256 len = auditorAddrList.length;
+        for (uint256 i = 0; i < len; i++) {
             if (auditorAddrList[i] == addr) {
                 return true;
             }
