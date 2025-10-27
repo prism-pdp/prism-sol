@@ -14,6 +14,7 @@ contract XZ21 {
     mapping(bytes32 => AuditingLog[]) private auditingLogTable;
 
     enum Stages {
+        WaitingChal,
         WaitingProof,
         WaitingResult,
         DoneAuditing
@@ -284,7 +285,14 @@ contract XZ21 {
     }
 
     function getAuditingLogs(bytes32 hashVal) external view returns(AuditingLog[] memory) {
-        return auditingLogTable[hashVal];
+        //return auditingLogTable[hashVal];
+        AuditingLog[] storage src = auditingLogTable[hashVal];
+        uint256 len = src.length;
+        AuditingLog[] memory dst = new AuditingLog[](len);
+        for (uint256 i = 0; i < len; i++) {
+            dst[i] = src[i];
+        }
+        return dst;
     }
 
     function _auditorContains(address addr) internal view returns(bool) {
