@@ -28,7 +28,6 @@ contract G4_Freshness3_XZ21 is Test {
     bytes constant PROOF  = bytes("test proof");
 
     uint256 public maxLenSeen;
-    uint256 public time;
 
     function setUp() public virtual {
         // SM が SP を指定してデプロイ
@@ -37,7 +36,7 @@ contract G4_Freshness3_XZ21 is Test {
 
         // 初期パラメタ登録（SM のみ）
         vm.prank(SM_ADDR);
-        s.registerParam("P", G, U);
+        s.registerParam(P, G, U);
 
         // アカウント登録（SM のみ）
         // accountType==0: TPA, ==1: SU
@@ -45,8 +44,6 @@ contract G4_Freshness3_XZ21 is Test {
         s.enrollAccount(0, TPA_ADDR, ""); // TPA 追加
         vm.prank(SM_ADDR);
         s.enrollAccount(1, SU_ADDR, SU_KEY);
-
-        time = 1;
 
         // 1. fuzzer がいじる「対象コントラクト」はこのハーネス自身
         targetContract(address(this));
@@ -64,36 +61,24 @@ contract G4_Freshness3_XZ21 is Test {
     }
     // --- fuzzでランダムに呼ばれる "操作ステップ" 群 ---
     function step_setChal() public {
-        // msg.sender制御
-        time++;
-        vm.warp(time);
         vm.prank(SU_ADDR);
         s.setChal(HASH_VAL_A, CHAL);
     }
 
     function step_setProof() public {
-        time++;
-        vm.warp(time);
         vm.prank(SP_ADDR);
         s.setProof(HASH_VAL_A, PROOF);
     }
 
-    function step_setAuditingResult(bool ok) public {
-        time++;
+    function step_setAuditingResult(uint256 time) public {
         vm.warp(time);
         vm.prank(TPA_ADDR);
-        s.setAuditingResult(HASH_VAL_A, ok);
+        s.setAuditingResult(HASH_VAL_A, true);
     }
 
     function invariant_G4_freshness2() public {
         XZ21.AuditingLog[] memory logs = s.getAuditingLogs(HASH_VAL_A);
         uint256 len = logs.length;
-        //console2.log(len);
-        if (len > maxLenSeen) {
-            maxLenSeen = len;
-        }
-        console2.log(maxLenSeen);
-        //emit log_named_uint("maxLenSeen", maxLenSeen);
         uint256 prev_date = 0;
         for (uint256 i = 0; i < len; i++) {
             if (logs[i].stage == XZ21.Stages.DoneAuditing) {
