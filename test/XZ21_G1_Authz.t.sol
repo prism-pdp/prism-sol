@@ -9,21 +9,18 @@ contract G1_Authz_XZ21_RegisterParam is Test {
     address constant SM_ADDR  = address(0x1000);
     address constant SP_ADDR  = address(0x2000);
 
+    string constant P = "P";
+    bytes  constant G = bytes("G");
+    bytes  constant U = bytes("U");
+
     function test_G1(
         address caller
     ) public {
         vm.prank(SM_ADDR);
         XZ21 s = new XZ21(SP_ADDR);
 
-        string memory testP = "P2"; // param.P は string だが内部では string
-        bytes  memory testG = bytes("G2");
-        bytes  memory testU = bytes("U2");
-
         vm.prank(caller);
-        s = new XZ21(SP_ADDR);
-
-        vm.prank(caller);
-        try s.registerParam(testP, testG, testU) {
+        try s.registerParam(P, G, U) {
             if (caller != SM_ADDR) {
                 fail();
             }
