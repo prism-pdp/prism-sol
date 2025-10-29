@@ -39,11 +39,14 @@ contract G1_Authz_XZ21_EnrollAccount is Test{
 
     address constant TEST_ADDR  = address(0x9000);
 
-    function test_G1(
+    function test_G1_EnrollSU(
         address caller,
-        int accountType
+        bool isSU
     ) public {
-        vm.assume(accountType == 0 || accountType == 1);
+        int accountType = 0; // TPA
+        if (isSU == true ) {
+            accountType = 1;
+        }
 
         vm.prank(SM_ADDR);
         XZ21 s = new XZ21(SP_ADDR);
