@@ -289,15 +289,11 @@ contract XZ21 {
         bytes32 hashVal,
         bool result
     ) external tpaOnly() {
-        uint256 size = auditingLogTable[hashVal].length;
-        require(size > 0, "Missing proof");
-        uint256 pos = size - 1;
-        require(auditingLogTable[hashVal][pos].stage == Stages.WaitingResult, "Not WaitingResult");
+        require(getLatestAuditingLogStage(hashVal) == Stages.WaitingResult, "Not WaitingResult");
+        require(getLatestAuditingLogDate(hashVal) < block.timestamp, "timestamp error");
 
-        if (pos > 0) {
-            uint256 tail = pos - 1;
-            require(auditingLogTable[hashVal][tail].date < block.timestamp, "timestamp error");
-        }
+        uint256 size = auditingLogTable[hashVal].length;
+        uint256 pos = size - 1;
 
         auditingLogTable[hashVal][pos].result = result;
         auditingLogTable[hashVal][pos].date = block.timestamp;
