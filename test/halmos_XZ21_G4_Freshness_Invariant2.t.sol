@@ -7,7 +7,7 @@ import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {console2} from "forge-std/console2.sol";
 
 contract G4_Freshness3_XZ21 is Test {
-   XZ21 internal s;
+    XZ21 internal s;
 
     // 役割
     address constant SM_ADDR  = address(0x1000);       // デプロイヤ = SM

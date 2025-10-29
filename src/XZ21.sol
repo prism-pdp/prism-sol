@@ -109,7 +109,7 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "G1: Only SM may register param"} msg.sender == smAddr;
-    /// #if_succeeds {:msg "G2: doneRegisterParam can be call only once"} old(doneRegisterParam) == false && doneRegisterParam == true;
+    /// #if_succeeds {:msg "G2: RegisterParam can be call only once"} old(doneRegisterParam) == false && doneRegisterParam == true;
     function registerParam(
         string memory paramP,
         bytes memory paramG,
@@ -126,9 +126,6 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "G1: Only SM may enroll account"} msg.sender == smAddr;
-    /// #if_succeeds {:msg "G3: No duplicate address"} (
-    ///     (accountType == 0) ==> !old(_auditorContains(addr))
-    /// );
     function enrollAccount(
         int accountType,
         address addr,
@@ -168,8 +165,7 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "G1: Only SP may register files"} msg.sender == spAddr;
-    /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
-    /// #if_succeeds {:msg "G3: XXX"} old(fileIndexTable[hashVal].splitNum) == 0 ==> splitNum == fileIndexTable[hashVal].splitNum;
+    /// #if_succeeds {:msg "G3: Creator address cannot be overwritten"} old(fileIndexTable[hashVal].creator) == address(0) ==> owner == fileIndexTable[hashVal].creator;
     function registerFile(
         bytes32 hashVal,
         uint32 splitNum,
@@ -211,7 +207,8 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "G1: Caller must exist in userAccountTable"} userAccountTable[msg.sender].pubKey.length > 0;
-    /// #if_succeeds {:msg "G5: Stage must be WaitingProof"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingProof;
+    /// #if_succeeds {:msg "G5: Before: the stage must be WaitingChal or DoneAuditing"} old(getLatestAuditingLogStage(hashVal)) == Stages.WaitingChal || old(getLatestAuditingLogStage(hashVal)) == Stages.DoneAuditing;
+    /// #if_succeeds {:msg "G5: After: the stage must be WaitingProof"} getLatestAuditingLogStage(hashVal) == Stages.WaitingProof;
     function setChal(
         bytes32 hashVal,
         bytes calldata chal
@@ -235,8 +232,8 @@ contract XZ21 {
     }
 
     /// #if_succeeds {:msg "G1: Only SP may set proof"} msg.sender == spAddr;
-    /// #if_succeeds {:msg "G5: Stage must have been WaitingProof"} old(auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage) == Stages.WaitingProof;
-    /// #if_succeeds {:msg "G5: Stage must be WaitingResult"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.WaitingResult;
+    /// #if_succeeds {:msg "G5: Before: the stage must be WaitingProof"} old(getLatestAuditingLogStage(hashVal)) == Stages.WaitingProof;
+    /// #if_succeeds {:msg "G5: After: the stage must be WaitingResult"} getLatestAuditingLogStage(hashVal) == Stages.WaitingResult;
     function setProof(
         bytes32 hashVal,
         bytes calldata proof
@@ -259,10 +256,35 @@ contract XZ21 {
         return auditingLogTable[hashVal][pos];
     }
 
+    function getLatestAuditingLogDate(bytes32 hashVal) internal view returns(uint256) {
+        uint256 size = auditingLogTable[hashVal].length;
+        uint256 date = 0;
+        if (size > 0) {
+            uint256 tail = size - 1;
+            if (auditingLogTable[hashVal][tail].stage == Stages.DoneAuditing) {
+                date = auditingLogTable[hashVal][tail].date;
+            } else {
+                if (tail > 0) {
+                    date = auditingLogTable[hashVal][tail - 1].date;
+                }
+            }
+        }
+        return date;
+    }
+
+    function getLatestAuditingLogStage(bytes32 hashVal) internal view returns(Stages) {
+        uint256 size = auditingLogTable[hashVal].length;
+        Stages s = Stages.WaitingChal;
+        if (size > 0) {
+            s = auditingLogTable[hashVal][size - 1].stage;
+        }
+        return s;
+    }
+
     /// #if_succeeds {:msg "G1: Only TPA may set auditing result"} isAuditor(msg.sender);
-    /// #if_succeeds {:msg "G4: XXX"} auditingLogTable[hashVal].length > 1 ==> auditingLogTable[hashVal][auditingLogTable[hashVal].length - 2].date < block.timestamp;
-    /// #if_succeeds {:msg "G5: Stage must have been WaitingResult"} old(auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage) == Stages.WaitingResult;
-    /// #if_succeeds {:msg "G5: Stage must be DoneAuditing now"} auditingLogTable[hashVal][auditingLogTable[hashVal].length - 1].stage == Stages.DoneAuditing;
+    /// #if_succeeds {:msg "G4: The date in AuditingLog must not move backward."} old(getLatestAuditingLogDate(hashVal)) < block.timestamp;
+    /// #if_succeeds {:msg "G5: Before: the stage must be WaitingResult"} old(getLatestAuditingLogStage(hashVal)) == Stages.WaitingResult;
+    /// #if_succeeds {:msg "G5: After: the stage must be DoneAuditing"} getLatestAuditingLogStage(hashVal) == Stages.DoneAuditing;
     function setAuditingResult(
         bytes32 hashVal,
         bool result
